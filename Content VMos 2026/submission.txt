@@ -1,0 +1,30 @@
+Submission guideline
+Preparation
+Please follow the format guideline in each track description page and prepare the zip file to submit. There is no constraint on the name of the zip file, but inside the zip file there should contain a file named answer.txt.
+
+PLEASE SUBMIT FOR ONE TRACK AT A TIME. That is, if you wish to submit for track 1, please put only the results of the samples for track 1 in the answer.txt file.
+
+Due to CodaBench design, there will be some dummy columns for tracks 1&2 and track 3 because the metrics are different. We apologize for the un-user-friendly interface.
+
+Submission
+Let's say we want to submit to track 3. We prepared a zip file called track3_baseline.
+
+Click the "My Submissions page."
+
+Under the "Selected Tracks" pulldown, select the track to submit (here we choose "VoiceMOS Challenge 2024 Track 3").
+
+Upload the zip file by clicking the paper clip icon. There will be a progress bar indicating your file is being uploaded.
+
+After the submission is uploaded, the scoring process will start. In the bottom you can monitor your submission status. It should go from "Preparing", "Running", "Scoring" to "Finished". You can also click on the cancel button to cancel.
+
+You can click the "Running track3_baseline.zip" (ID=XXXXX)" tab to expand. Nothing much to see though.
+
+Once the scoring process is finished, you can choose whether to add it to the leaderboard. Note that you can add as many results on the leaderboard as you want.
+
+You can click on each submission to open the details window. These functions are provided by CodaBench, so feel free to check around. For instance, you can click on the LOGS tab to check the stdout and stderr.
+
+If you did not UNselect the track you DO NOT want to submit in step 2, then you will see th other tracks' results. It's just that we posed a sanity check to see whether the IDs match the track of interest. For instance, since we only put track 3 samples in answer.txt, the track 1 page will say that the sanity check failed, as shown in the screenshot.
+
+Following on step 8, the screenshot shows what happens on the leadboard if you did no unselect the unwanted tracks (shown in the first row). Basically the MSE will be assigned 100 and the LCC/SRCC/KTAU will be assigned 0. If you did unselect the unwanted tracks (shown in the second row), then all scores on unwanted tracks will be n/a.
+
+Finally, we can check our track 3 results by scrolling to the rightmost side.

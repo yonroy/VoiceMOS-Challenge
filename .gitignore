@@ -1,0 +1,32 @@
+# Secrets / môi trường
+.env
+*.key
+
+# Môi trường ảo Python
+.venv/
+venv/
+env/
+
+# Repo baseline clone riêng (nặng, là git repo độc lập — không commit)
+vmc2026-baselines/
+UTMOS22/
+emotion2vec/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Output / submission
+*.zip
+*.out
+predictions*.csv
+answer.txt
+outputs/
+
+# Hệ điều hành / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

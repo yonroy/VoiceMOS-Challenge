@@ -1,0 +1,55 @@
+Track 2: Predicting MOS of speech naturalness and emotion similarity for emotional TTS systems
+Task & dataset description
+The objective of this track is to evaluate various dimensions of emotional TTS samples.
+
+Given an input speech sample, the system is required to predict (1) MOS for speech quality (QMOS), (2) MOS for emotion (degree of similarity to the target synthesized emotion label), as well as, optionally, (3) listeners' categorical choices of perceived emotions and (4) ratings for valence, arousal, and dominance.
+
+This track is based on a newly collected dataset. The dataset is based on the ESD and DailyTalk datasets, and five emotions are considered: neutral, happy, angry, sad, and surprised. In addition to the natural emotion samples in ESD and DailyTalk, synthesized samples from other 13 speech synthesis systems were included.
+
+Set name	Number of samples
+Training set	12746
+Validation set	2730
+Evaluation set	2730
+Data for training phase
+To obtain the data, please download the license file here:  https://drive.google.com/file/d/1XYFRWCzKHRelz6KGZJlTsR-PAdacJ__d/view?usp=share_link.
+Then, fill it out and email it to ecooper@nict.go.jp.  The data links will be shared once the information in your license has been checked and confirmed.
+
+Data for evaluation
+To be announced.
+
+Evaluation metrics
+For the leaderboard, we will be showing the following metrics:
+
+Utterance-level Spearman's rank correlation coefficient (SRCC) for QMOS
+Utterance-level Spearman's rank correlation coefficient (SRCC) for EMOS
+Categorical error value for listener perceived emotion.
+For each utterance, the ground truth is represented as a vector of proportions across the five emotion categories, where each value indicates the ratio of annotators who selected that specific emotion. Predictions are expected as probability scores within the same zero-to-one range. The metric computes the absolute difference between the ground-truth proportion and the predicted probability for every emotion category independently. These individual residuals are summed across all categories and all utterances, and the resulting total is divided by the cumulative number of labels to produce the final mean error score.
+
+Utterance-level Spearman's rank correlation coefficient (SRCC) for valence
+Utterance-level Spearman's rank correlation coefficient (SRCC) for arousal
+Utterance-level Spearman's rank correlation coefficient (SRCC) for dominance
+However, in our final summary paper, as in previous challenges, we will also report other metrics such as the mean squared error (MSE), Linear Correlation Coefficient (LCC) and Kendall Tau Rank Correlation (KTAU). We will also calculate these metrics in both the utterance level and the system level.
+
+Please refer to this code snippet for calculation.
+
+Submission format
+The prediction results should be put in a text file, and it MUST be named as answer.txt.
+
+The format should look like:
+
+wav,QMOS,EMOS,CAT,VAL,ARO,DOM
+vmc2026-track2-sys012-spk026-utt041.wav,3.5880108,1,angry:7.369507670773601e-07|happy:0.00014256902795750648|neutral:0.9805067777633667|sad:0.01827258989214897|surprised:4.152211019459173e-08,1,5,5
+vmc2026-track2-sys002-spk012-utt177.wav,3.7573109,2,angry:1.194751985167386e-05|happy:0.0021803448908030987|neutral:0.932743489742279|sad:0.001538898330181837|surprised:0.004451340530067682,4,4,4
+Floating point numbers are allowed. No need to convert to integers.
+Note that QMOS and EMOS are required, and the rest are optional. In other words, for example, the submission can have the following headers:
+wav,QMOS,EMOS
+wav,QMOS,EMOS,CAT
+wav,QMOS,EMOS,VAL,ARO,DOM
+wav,QMOS,EMOS,VAL,DOM
+wav,QMOS,EMOS,CAT,VAL
+and so on.
+Finally, compress the file with zip format and name it whatever you want. There is NO naming requirement for the zip file. To avoid generating extra folders, it is recommended to use the following command:
+
+zip -j <any_name>.zip answer.txt
+Detailed instructions for submission and FAQ
+It is recommended to read this document when submitting to CodaBench for the first time: https://voicemos-challenge-2023.github.io/codalab.html
