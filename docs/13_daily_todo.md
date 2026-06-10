@@ -8,7 +8,7 @@
 > **Cửa sổ chỉ ~1 tuần.** Chốt ranking chính thức ở phase này (DEV chỉ để luyện). Grader chỉ chấm `answer.txt` → được phép **trộn cột / ensemble**. Track 1/2 xếp theo **SRCC**, Track 3 theo **LCC** (utt + system). **Bắt buộc:** nộp trong phase này + system description + khai báo external data/license.
 
 ### 🔧 CHUẨN BỊ TRƯỚC (làm xong TRƯỚC 31/7 — đừng để nước tới chân)
-- [x] **Khôi phục & lưu chắc mọi checkpoint** (9/6): ckpt cảm xúc `ft_emotion_full_20epoch.pt` + cache audeering → đã upload **Kaggle Dataset** (đủ ckpt + cache). _(còn: ghi rõ slug vào docs)_
+- [x] **Khôi phục & lưu chắc mọi checkpoint** — Kaggle Dataset **`cache-exp8`** (cập nhật 10/6): gốc = `ft_qmos_utmos.pt` (exp13) + `ft_mamba_emotion_full.pt` (exp15); `archive/` = `ft_emotion_full_20epoch.pt` (exp08 TỐT NHẤT) + `ft_emotion_full.pt` + `ft_joint_full.pt` (exp11) + `aud_dev.npz`/`aud_train.npz`
 - [ ] **Đóng băng pipeline inference** mỗi cột: exp07 (QMOS) + exp08 (5 cảm xúc) chạy được end-to-end, đã test trên DEV ra đúng `answer.txt`
 - [ ] **Viết sẵn script TRỘN CỘT** (ghép QMOS←exp07 + cảm xúc←exp08 thành 1 answer.txt) + **script validate format** (đúng header/số dòng/range) — test trên DEV
 - [ ] Ước lượng **thời gian chạy inference 2.730 eval** trên T4 (để biết cần mấy giờ GPU) + còn đủ **quota Kaggle 30h/tuần**?
@@ -35,11 +35,29 @@
 
 ---
 
+## ✅ NGÀY 10/6/2026 (Phiên 21) — 🚀 exp13 NỘP: QMOS 0.548→~0.63 (kỷ lục cột QMOS) + vẽ kiến trúc exp_mix
+- [x] 🚀 **Chạy + NỘP exp13** (fine-tune thẳng UTMOS trên nhãn qMOS) → **QMOS ~0.63** DEV — phá trần exp07 0.548 (trả nợ kéo dài từ Phiên 10); cột cảm xúc bản nộp không bằng exp08
+- [x] **Vẽ kiến trúc từng layer hệ tốt nhất** (exp_mix: nhánh exp08 + exp07 + exp13 v2) → mục mới trong `04_` + mục 1–4 Track 2 của `12_system_description.md` (sơ đồ ASCII + bảng layer + external resources + training)
+- [x] Nhận xét `100audio_emotion_scores.csv` (100/100 OK): neutral-bias rõ (68 neutral/32 happy, khử neutral → 97 happy); QMOS thấp đồng loạt 1.85 (lệch domain — chỉ dùng xếp hạng); VAD dải hẹp nhưng đúng hướng
+- [x] exp15_predict: thêm in `val_emos` khi nạp ckpt (biết ngay ckpt smoke-test hay train thật); xác định `ft_mamba_emotion_full.pt` (1.27GB local, 8/6) = ckpt exp15 + hướng dẫn predict DEV
+- [x] Đồng bộ điểm exp13 vào `04_` / `07_` / `12_` / `18_` / `20_`
+
+### ➡️ VIỆC TIẾP THEO
+- [ ] 🔴 **Tải `scoring_result.zip` exp13** về `submissions/Track2/exp13_finetune_qmos/` → ghi số chính xác 4 chữ số (hiện ~0.63 user báo) + 5 cột còn lại
+- [ ] 🔴 **Ghép + NỘP bản trộn cột MỚI**: QMOS←exp13 (0.63) + 5 cảm xúc←exp08 → hệ 6 cột mạnh nhất mới (script ghép đã có từ exp_mix)
+- [x] 🔴 **Upload ckpt lên Kaggle Dataset `cache-exp8`** — đã có ở GỐC dataset: `ft_qmos_utmos.pt` (exp13) + `ft_mamba_emotion_full.pt` (exp15); cache + ckpt cũ trong `archive/`. exp15_predict đã trỏ mặc định vào đây
+- [ ] 🔒 (vẫn nợ) revoke token HF đã lộ; smoke test exp16 (LLM-judge)
+
+---
+
 ## ✅ NGÀY 10/6/2026 (Phiên 20) — client Kaggle gọi API + notebook VoxCPM2 sinh emotion & chấm điểm + sửa metric neutral-bias
 - [x] **Client Kaggle gọi API 3 track**: `kaggle_baseline/demo_api_client_kaggle.{ipynb,py}` (urllib, resume, CSV, nháp answer.txt)
 - [x] **Notebook VoxCPM2 sinh emotion + chấm điểm** (`Tuần 1/VoxCPM2/VoxCPM2_Emotion_Generate_and_Score.ipynb`): Kaggle GPU, chấm **local** (exp08 + UTMOS), upload ref qua `/kaggle/input`
 - [x] **Phát hiện neutral-bias trên tiếng Việt**: argmax luôn ra neutral (acc 20%) nhưng **VAD đúng hướng** (arousal angry/surprised cao, sad thấp; valence happy cao nhất)
 - [x] **Sửa metric**: thêm `perceived_nn` (khử neutral), `cat_target_rank`, 2 accuracy, **Bước 8b SRCC theo VAD**
+- [x] **Viết lại README** (bảng điểm 3 track + docs 00→21 + Demo UI/API HF) + thêm link Demo UI vào `07_`
+- [x] **`.gitignore`** chặn `cache/`/`*.pt`/`*.npz`/`100audio/`/`*.wav` (tránh commit nhầm 4.7GB)
+- [x] **Commit + push** `8790aff` lên `origin/main` (127 file reorg + api_service + demo client) — không lộ token
 
 ### ➡️ VIỆC TIẾP THEO
 - [ ] 🟢 Chạy lại Bước 7→8b → gửi SRCC VAD mới (xác nhận hướng đo đúng)

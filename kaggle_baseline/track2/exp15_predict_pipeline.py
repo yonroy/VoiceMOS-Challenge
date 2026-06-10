@@ -54,7 +54,9 @@ CACHE_DIR = "/kaggle/working/ft_cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
 # ── CHECKPOINT exp15 (đủ backbone + Mamba + heads) ───────────────────────────
-CKPT_PATH = ""    # << "" = auto-dò ft_mamba_emotion_full*.pt; hoặc "/kaggle/input/<slug>/ft_mamba_emotion_full (2).pt"
+# Mặc định trỏ Kaggle Dataset `cache-exp8` (đã upload 10/6: 2 ckpt ở gốc + cache trong archive/).
+# Không thấy đường dẫn này → tự auto-dò ft_mamba_emotion_full*.pt trong /kaggle/input.
+CKPT_PATH = "/kaggle/input/cache-exp8/ft_mamba_emotion_full.pt"
 
 def find_ckpt(explicit):
     """Tìm checkpoint exp15. Khớp cả tên bị thêm hậu tố trùng, vd 'ft_mamba_emotion_full (2).pt'."""
@@ -69,6 +71,23 @@ def find_ckpt(explicit):
 CKPT_PATH = find_ckpt(CKPT_PATH)
 assert CKPT_PATH, "❌ Không thấy checkpoint ft_mamba_emotion_full*.pt. Đã Add Input dataset chứa ckpt chưa?"
 print("✅ Dùng checkpoint:", CKPT_PATH)
+
+# ── (MỚI 10/6) CHECKPOINT QMOS exp13 (`ft_qmos_utmos*.pt` — UTMOS fine-tune, DEV 0.63) ────
+# Ưu tiên cột QMOS: exp13 ckpt > answer.txt exp07 (0.548) > UTMOSv2 zero-shot.
+QMOS_CKPT = "/kaggle/input/cache-exp8/ft_qmos_utmos.pt"   # << mặc định cache-exp8; không thấy → auto-dò
+
+def find_qmos_ckpt(explicit):
+    if explicit and os.path.exists(explicit):
+        return explicit
+    for base in ["/kaggle/input", "/kaggle/working"]:
+        hits = sorted(glob.glob(os.path.join(base, "**", "ft_qmos_utmos*.pt"), recursive=True))
+        if hits:
+            return hits[0]
+    return ""
+
+QMOS_CKPT = find_qmos_ckpt(QMOS_CKPT)
+print(("✅ QMOS ckpt exp13: " + QMOS_CKPT) if QMOS_CKPT
+      else "ℹ️ Không thấy ft_qmos_utmos*.pt → QMOS rơi về exp07 answer / UTMOSv2")
 
 # (Tùy chọn) tái dùng cache audeering DEV — quét đệ quy (file có thể nằm trong archive/)
 CACHE_INPUT = "/kaggle/input/cache-exp8"   # << SỬA slug (hoặc "")
@@ -161,6 +180,8 @@ print("Device:", device, ("✅ " + torch.cuda.get_device_name(0)) if device == "
 ckpt = torch.load(CKPT_PATH, map_location="cpu", weights_only=False)  # ckpt có numpy → cần False
 assert "wavlm" in ckpt, "❌ Checkpoint KHÔNG có 'wavlm' (backbone) → không inference được. Cần ft_mamba_emotion_full*.pt đủ."
 print("✅ Nạp ckpt | keys:", list(ckpt.keys()))
+print("   📊 val_emos (SRCC EMOS nội bộ lúc lưu ckpt):", ckpt.get("val_emos"),
+      "→ nếu thấp bất thường (<0.7) thì đây là ckpt smoke-test, nên RESUME train tiếp thay vì nộp")
 
 # Lấy cấu hình KIẾN TRÚC từ ckpt (để dựng đúng shape head)
 USE_MAMBA  = bool(ckpt.get("USE_MAMBA", True))
@@ -461,6 +482,31 @@ dev_stems = [stem(n) for n in dev_names]
 print("DEV:", len(dev_names), "mẫu")
 aud_dev = extract_audeering(dev_stems, "dev")
 
+def load_exp13_qmos():
+    """(MỚI 10/6) QMOS = UTMOS fine-tune exp13 (DEV 0.63): torch.hub utmos22_strong + nạp ft_qmos_utmos*.pt."""
+    if not QMOS_CKPT:
+        return None
+    qck = torch.load(QMOS_CKPT, map_location="cpu", weights_only=False)
+    assert "utmos_state" in qck, f"❌ {QMOS_CKPT} không có 'utmos_state' — không phải ckpt exp13?"
+    print(f"✅ QMOS = UTMOS fine-tune exp13 | val_srcc lúc lưu: {qck.get('val_srcc')} "
+          f"(zero-shot ~0.414 · exp07 0.548 · exp13 DEV ~0.63)")
+    um = torch.hub.load("tarepan/SpeechMOS:v1.2.0", "utmos22_strong", trust_repo=True).to(device)
+    um.load_state_dict(qck["utmos_state"])
+    um.eval()
+    q_max_sec = int(qck.get("QMOS_MAX_SEC", 12))   # cắt audio KHỚP lúc train exp13 (12s, KHÔNG phải 6s exp15)
+    d = {}
+    with torch.no_grad():
+        for n in tqdm(dev_names, desc="QMOS exp13"):
+            p = os.path.join(WAV_DIR, n if str(n).endswith(".wav") else str(n) + ".wav")
+            if not os.path.exists(p):
+                continue
+            wave, _ = librosa.load(p, sr=SR, mono=True)
+            x = torch.from_numpy(wave[: q_max_sec * SR].astype(np.float32)).unsqueeze(0).to(device)
+            d[n] = float(um(x, SR).item()); d[stem(n)] = d[n]
+    del um
+    torch.cuda.empty_cache() if device == "cuda" else None
+    return d
+
 def load_exp07_qmos():
     if EXP07_ANSWER and os.path.exists(EXP07_ANSWER):
         import csv
@@ -472,7 +518,9 @@ def load_exp07_qmos():
         return d
     return None
 
-qmos_map = load_exp07_qmos()
+qmos_map = load_exp13_qmos()           # ưu tiên 1: ckpt exp13 (0.63)
+if qmos_map is None:
+    qmos_map = load_exp07_qmos()       # ưu tiên 2: answer.txt exp07 (0.548)
 if qmos_map is None:
     print("ℹ️ Không có answer.txt exp07 → chấm QMOS bằng UTMOSv2 (T05, vô địch VMC2024).")
     pip_install("git+https://github.com/sarulab-speech/UTMOSv2.git")

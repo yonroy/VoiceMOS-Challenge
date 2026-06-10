@@ -55,27 +55,91 @@
 > Cách tiếp cận: **phát triển hệ thống riêng**, bắt đầu từ baseline rồi cải tiến.
 
 ## 1. Tổng quan hệ thống
-- Sub-task làm: QMOS + EMOS (bắt buộc) [+ CAT / VAD nếu có].
-- Ý tưởng cốt lõi / novelty: [điền — vd: fusion SSL backbone + emotion embedding; multi-task QMOS+EMOS]
+- Sub-task làm: **cả 6 cột** — QMOS + EMOS (bắt buộc) + CAT + VAD (tùy chọn).
+- **Hệ thống tốt nhất hiện tại (10/6):** trộn cột answer.txt từ **2 model độc lập** — mỗi model tối ưu cho nhóm cột nó giỏi nhất:
+  - **Nhánh A (exp08):** WavLM fine-tune + audeering frozen → 5 cột cảm xúc (EMOS/CAT/VAL/ARO/DOM)
+  - **Nhánh B (exp13, NÂNG CẤP 10/6):** **fine-tune thẳng UTMOS** trên nhãn `qMOS` thật → cột QMOS **0.63** (thay nhánh exp07 cũ 0.548; bản trộn QMOS←exp13 chưa nộp — bản đã nộp 9/6 = exp_mix dùng exp07)
+- Ý tưởng cốt lõi: **fine-tune về đúng domain thắng frozen ở CẢ HAI nhóm cột** — cảm xúc: fine-tune WavLM (exp08) thắng fusion frozen (exp04/07); chất lượng: fine-tune UTMOS (exp13, 0.63) thắng head frozen + neo UTMOS (exp07, 0.548) thắng UTMOS zero-shot (0.414). **Trộn cột** lấy cái tốt nhất của từng nhánh (hợp lệ vì grader chấm từng cột độc lập trên answer.txt).
 
 ## 2. Kiến trúc
-- Backbone: [WavLM / HuBERT / Wav2Vec2 — điền sau khi chốt]
-- Đầu ra: [head dự đoán QMOS, EMOS, ...]
-- **[HÌNH 2: sơ đồ kiến trúc hệ thống của mình]** ← BẮT BUỘC, cần chèn
-- [Mô tả từng khối: input → feature → pooling → head → score]
+
+**Sơ đồ tổng quát (HÌNH 2a):**
+
+```
+                          wav 16 kHz
+                ┌──────────────────┴──────────────────┐
+                ▼                                      ▼
+   ┌─ NHÁNH A · exp08 (FINE-TUNE) ─┐     ┌─ NHÁNH B · exp07 (FROZEN+head) ─┐
+   │  EMOS · CAT · VAL · ARO · DOM │     │  6 cột, CHỈ LẤY QMOS            │
+   └──────────────┬────────────────┘     └────────────────┬────────────────┘
+                  ▼                                       ▼
+        answer_exp08.txt                          answer_exp07.txt
+                  └──────────────┬────────────────────────┘
+                                 ▼
+              TRỘN CỘT: wav, QMOS←exp07, EMOS/CAT/VAL/ARO/DOM←exp08
+                                 ▼
+                            answer.txt
+```
+
+**Nhánh A — exp08 (HÌNH 2b): WavLM fine-tune + audeering frozen → trunk → 3 head cảm xúc**
+
+```
+wav 16kHz (cắt 8s)
+   ├─► [A1] WavLM-large (SAILER warm-start, FINE-TUNE 6 lớp trên) ─► mean-pool ─► 1024-D
+   └─► [A2] audeering wav2vec2-large (FROZEN, cache) ──────────────► [emb 1024 | VAD 3] = 1027-D
+                Concat = 2051-D
+                      ▼
+        [A3] TRUNK: Linear 2051→512 → ReLU → Dropout 0.3 → Linear 512→512 → ReLU → Dropout 0.3
+                      ▼
+   [A4a] EMOS head: [trunk 512 | one-hot target 5] = 517 → 128 → 1 → giải z-score (1–5)
+   [A4b] CAT  head: 512 → 128 → 5 → softmax (tỉ lệ vote 5 cảm xúc)
+   [A4c] VAD  head: 512 → 128 → 3 → giải z-score (VAL/ARO/DOM, 1–5)
+```
+
+**Nhánh B — exp07 (HÌNH 2c): fusion 2 backbone frozen + UTMOS → trunk → 4 head (lấy QMOS)**
+
+```
+wav 16kHz
+   ├─► [B1] emotion2vec+ large (FROZEN, cache) ──► [emb 1024 | p5] = 1029-D
+   ├─► [B2] SAILER WavLM-large (FROZEN, cache) ──► [emb 1024 | p9 | VAD 3] = 1036-D
+   └─► [B3] UTMOS22_strong (FROZEN, cache) ──────► điểm chất lượng 1-D
+                Concat [B1|B2] = 2065-D, z-score
+                      ▼
+        [B4] TRUNK: Linear 2065→512 → ReLU → Dropout 0.3 → Linear 512→512 → ReLU → Dropout 0.3
+                      ▼
+   [B5a] QMOS head ⭐: [trunk 512 | UTMOS 1] = 513 → 128 → 1  (neo residual quanh UTMOS)
+   [B5b] EMOS head: [trunk | target 5] = 517 → 128 → 1   ─┐ đồng học nuôi trunk
+   [B5c] CAT  head: 512 → 128 → 5 → softmax               ├ (multi-task); cột bị
+   [B5d] VAD  head: 512 → 128 → 3                         ─┘ exp08 vượt, không dùng
+```
+
+**Nhánh B v2 — exp13 (HÌNH 2d, NÂNG CẤP 10/6): fine-tune thẳng UTMOS → QMOS 0.63**
+
+```
+wav 16kHz (cắt 12s)
+   └─► [B'] UTMOS22_strong (torch.hub, TRAINABLE end-to-end, warm-start;
+            CNN feature-extractor đóng băng) ─► điểm QMOS (1–5)
+       Train: nhãn qMOS thật của Track 2 · MSE (RANK_LAMBDA tùy chọn)
+            · LR 1e-5 · BATCH 1 × ACCUM 16 · ckpt ft_qmos_utmos.pt
+       → "neo UTMOS" giờ nằm sẵn trong trọng số warm-start, không cần head riêng
+```
+
+> Chi tiết từng layer (bảng vai trò + số chiều, lấy đúng từ code) ở mục **exp_mix** trong `04_experiments_log.md`; kiến trúc exp13 ở mục **exp13**. Khi dịch sang EN cho BTC: chuyển các sơ đồ ASCII trên thành hình vẽ (SVG/TikZ).
 
 ## 3. Dữ liệu & external resources
-- **Data challenge:** Track 2 (train 12.746 / val 2.730 / eval 2.730).
-- **Có dùng external data:** [✅/❌ — khai báo rõ]
-  - Dataset nền (BTC cung cấp): ESD, DailyTalk.
-  - Public data bổ sung (nếu dùng): [IEMOCAP / MSP-Podcast / ... + link]
-  - Pre-trained model: [WavLM checkpoint + link HuggingFace]
-- Xử lý dữ liệu: [resample 16kHz, cắt/pad, normalize, ...]
+- **Data challenge:** Track 2 (train 12.746 / val 2.730 / eval 2.730), ráp từ gói BTC + ESD + DailyTalk (15.477 wav, chuẩn hóa sv56).
+- **Có dùng external data:** ❌ không dùng data huấn luyện ngoài (chỉ train trên train.csv của challenge). ✅ **Có dùng pre-trained model (phải khai báo license):**
+  - `tiantiaf/wavlm-large-categorical-emotion` (SAILER, WavLM-large) — **Open RAIL** (phi thương mại) — backbone nhánh A (fine-tune) + feature nhánh B
+  - `audeering/wav2vec2-large-robust-12-ft-emotion-msp-dim` — **CC BY-NC-SA** (phi thương mại) — feature VAD frozen nhánh A
+  - `iic/emotion2vec_plus_large` (funasr) — feature cảm xúc frozen nhánh B
+  - UTMOS22_strong (SpeechMOS, torch.hub) — neo chất lượng cho QMOS head nhánh B
+- Xử lý dữ liệu: resample 16 kHz mono; nhãn listener-wise gộp **trung bình theo wav**; EMOS/VAD chuẩn hóa z-score (giải chuẩn khi predict); CAT = tỉ lệ vote 5 lớp; nhánh A cắt audio 8s khi train.
 
 ## 4. Chiến lược training
-- Loss: [vd MSE cho QMOS/EMOS; multi-task weighting]
-- Optimizer / LR / batch size / epochs: [điền]
-- Kỹ thuật: [augmentation / fine-tune toàn bộ hay freeze backbone / bias correction / ensemble]
+- **Loss (cả 2 nhánh):** MSE từng task + **uncertainty weighting** `L = Σ (1/2σₜ²)Lₜ + log σₜ` (tự cân bằng task, không chỉnh tay trọng số).
+- **Nhánh A (exp08):** fine-tune **6 lớp Transformer trên cùng** của WavLM (LR 1e-5), trunk+head LR 1e-3; BATCH 4 × ACCUM 8 (effective 32); AMP + gradient checkpointing; EPOCHS ≤12, early-stop theo SRCC val nội bộ; checkpoint lưu **cả backbone + heads** mỗi best (`ft_emotion_full_20epoch.pt`, đã upload Kaggle Dataset `toanminh222/cache-exp8`).
+- **Nhánh B (exp07):** backbone đóng băng hoàn toàn (đặc trưng trích 1 lần, cache .npz) → chỉ train trunk + 4 head trên đặc trưng cache: LR 1e-3, BATCH 64, ≤80 epoch, early-stop.
+- Không augmentation, không ensemble nhiều seed (hướng mở rộng); bản fallback cho Evaluation = chính exp_mix này.
 
 ## 5. Kết quả
 | Set | QMOS SRCC | EMOS SRCC | CAT err | VAL/ARO/DOM SRCC |
@@ -87,9 +151,11 @@
 | **exp07 FUSION+QMOS 6-head (DEV, 4/6/2026)** | **0.548** 🏆 | 0.795 | 0.153 | 0.581 / 0.752 / 0.705 |
 | **exp08 FINE-TUNE WavLM (DEV NỘP, 5/6/2026)** | 0.4139 (UTMOS) | **0.811** 🏆 | **0.133** 🏆 | **0.659** 🏆 / **0.793** 🏆 / **0.751** 🏆 |
 | **exp08b RESUME exp08 (DEV NỘP, 6/6/2026)** | 0.4167 (UTMOS) | 0.8116 | 0.1331 | 0.6605 / 0.7904 / 0.7539 |
-| **🏆 exp_mix TRỘN CỘT (DEV NỘP, 9/6/2026)** | **0.548** 🏆 | **0.811** 🏆 | **0.133** 🏆 | **0.659** 🏆 / **0.793** 🏆 / **0.751** 🏆 |
+| **🏆 exp_mix TRỘN CỘT (DEV NỘP, 9/6/2026)** | 0.548 | **0.811** 🏆 | **0.133** 🏆 | **0.659** 🏆 / **0.793** 🏆 / **0.751** 🏆 |
+| **🚀 exp13 FINE-TUNE UTMOS (DEV NỘP, 10/6/2026)** | **~0.63** 🏆 | (không bằng exp08) | — | — |
 
-> 🏆 **exp_mix (9/6, NỘP) — HỆ 6 CỘT MẠNH NHẤT:** ghép cột answer.txt — QMOS←exp07 (0.548) + EMOS/CAT/VAD←exp08 → điểm thật **khớp đúng best-per-column** (QMOS 0.5480 · EMOS 0.8111 · CAT 0.1331 · VAL 0.6590 · ARO 0.7933 · DOM 0.7509). Đây là **bản fallback an toàn** cho phase Evaluation. Folder: `submissions/Track2/exp_mix_q07_emo08/`.
+> 🚀 **exp13 (10/6, NỘP) — KỶ LỤC QMOS MỚI 0.63:** fine-tune thẳng UTMOS trên nhãn `qMOS` thật → QMOS 0.548→**~0.63** (+0.08). Cột cảm xúc bản nộp này không bằng exp08 → **hệ 6 cột mạnh nhất MỚI = trộn cột QMOS←exp13 + 5 cảm xúc←exp08 (CHƯA nộp bản trộn này)**. ⚠️ Số ~0.63 từ leaderboard, chưa tải scoring_result về local; xem `04_` mục exp13.
+> 🏆 **exp_mix (9/6, NỘP):** ghép cột answer.txt — QMOS←exp07 (0.548) + EMOS/CAT/VAD←exp08 → điểm thật **khớp đúng best-per-column tại thời điểm đó** (QMOS 0.5480 · EMOS 0.8111 · CAT 0.1331 · VAL 0.6590 · ARO 0.7933 · DOM 0.7509). Đây là **bản fallback an toàn** cho phase Evaluation. Folder: `submissions/Track2/exp_mix_q07_emo08/`.
 > 🏆 **exp08 (5/6, NỘP):** fine-tune WavLM (mở băng 6 lớp, warm-start SAILER) + audeering frozen → **thắng cả 5 cột cảm xúc** vs exp07. QMOS rớt 0.414 (bản nộp không mượn exp07). → **Hệ tốt nhất 6 cột = trộn cột: 5 cảm xúc exp08 + QMOS exp07 (0.548)** (✅ đã nộp 9/6 = exp_mix). ⚠️ Backbone bị mất (kernel chết, ckpt cũ chỉ lưu heads) → đã vá lưu `ft_emotion_full.pt`, phải train lại. License thêm: **UTMOSv2 MIT** (nếu dùng cho QMOS).
 > 📌 **exp08b (6/6, NỘP):** resume từ ckpt full + cache → điểm gần như TRÙNG exp08 (chênh vài phần nghìn). Xác nhận checkpoint exp08 **đã hội tụ**, train thêm trên cùng data không đổi.
 | Hệ thống của mình (final) | [điền] | [điền] | [điền] | [điền] |

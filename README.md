@@ -11,10 +11,14 @@ Dự án tham gia **VoiceMOS Challenge 2026** — cả 3 track, **dồn sức v�
 | Track | Điểm |
 |---|---|
 | **Track 1** (Speech Enhancement) | ACR/CCR = **0.662 / 0.411** (baseline) |
-| **Track 2** (Emotional TTS) | QMOS **0.548** · EMOS **0.811** · CAT err **0.133** · VAD VAL/ARO/DOM **0.659 / 0.793 / 0.751** |
-| **Track 3** (Codec Synthesis) | SPK/ACC = **0.451 / 0.440** (baseline) |
+| **Track 2** (Emotional TTS) | QMOS **0.63** (exp13, 10/6) · EMOS **0.812** · CAT err **0.133** · VAD VAL/ARO/DOM **0.661 / 0.79 / 0.754** |
+| **Track 3** (Codec Synthesis) | SPK/ACC = **0.451 / 0.44** (baseline) |
 
-> Hệ Track 2 mạnh nhất = **trộn cột** `exp_mix_q07_emo08` (5 cảm xúc từ exp08 fine-tune + QMOS từ exp07). Chi tiết tiến hóa exp01→exp08: [docs/04_experiments_log.md](docs/04_experiments_log.md).
+**Leaderboard CodaBench (DEV, chụp 10/6/2026):**
+
+![Leaderboard CodaBench 10/6/2026 — 10 cột 3 track](benchmark/final.png)
+
+> QMOS vừa được **exp13 (fine-tune UTMOS) phá trần 0.548 → 0.63** ngày 10/6; 5 cột cảm xúc tốt nhất từ exp08/exp08b (fine-tune WavLM). Bản nộp gom-tốt-nhất gần đây = trộn cột `exp_mix_q07_emo08` (9/6, QMOS còn 0.548) → bản trộn mới QMOS←exp13 đang chờ nộp. Chi tiết tiến hóa exp01→exp13: [docs/04_experiments_log.md](docs/04_experiments_log.md).
 
 ---
 
@@ -91,6 +95,11 @@ VoiceMOS Challenge 2026/
 - Gọi hàng loạt từ Kaggle: [kaggle_baseline/demo_api_client_kaggle.ipynb](kaggle_baseline/demo_api_client_kaggle.ipynb)
 
 **📦 Checkpoint & code (HF Models):** `tranminhtoan140601/voicemos2026-track2-emotion` (checkpoint) · `…/voicemos2026-code` (pipeline).
+
+**🎞️ Slide thuyết trình 3 track (mentor giao):**
+- Bản render HTML (mở thẳng bằng trình duyệt): [slide/voicemos2026_slides.html](slide/voicemos2026_slides.html)
+- Nguồn Marp (markdown + 4 hình kiến trúc SVG inline): [docs/21_slides_3_tracks.md](docs/21_slides_3_tracks.md)
+- Render lại / export PDF-PPTX: `npx @marp-team/marp-cli docs/21_slides_3_tracks.md --html --no-stdin -o slide/voicemos2026_slides.html` (bắt buộc cờ `--html` để hiện hình SVG; thiếu `--no-stdin` sẽ treo).
 
 ---
 

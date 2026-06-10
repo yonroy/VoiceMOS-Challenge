@@ -25,7 +25,12 @@
 - Thêm `perceived_nn` = argmax CAT **bỏ neutral**; `cat_target_rank` (scorer xếp target hạng mấy/5); in **2 accuracy** (argmax gốc vs khử neutral).
 - Thêm **Bước 8b — SRCC theo VAD**: so VAD dự đoán với prototype kỳ vọng mỗi emotion (đúng tinh thần SRCC của challenge, miễn nhiễm neutral-bias tuyệt đối). Kỳ vọng Arousal/Valence SRCC > 0.
 
-### 5. Việc tiếp theo
+### 5. README viết lại + commit/push GitHub
+- **Viết lại [README.md](README.md)**: thêm bảng điểm best-per-column 3 track, bảng docs đầy đủ 00→21, mục Demo UI (Gradio Space `voicemos2026-demo`) + API service + checkpoint HF, trỏ quy trình "đọc"/"xong". Thêm link Demo UI vào `07_`.
+- **`.gitignore`**: chặn `cache/` (4.7GB), `*.pt`, `*.npz`, `100audio/`, `*.wav` (trước đó chưa loại → suýt commit nhầm vài GB).
+- **Commit + push** `8790aff` lên `origin/main` (yonroy/VoiceMOS-Challenge-2026): **127 file** (đợt tái cấu trúc docs/ + kaggle_baseline/track* + api_service/ + demo client). Đã kiểm: **không lộ token** (toàn placeholder), file lớn nhất chỉ 125KB.
+
+### 6. Việc tiếp theo
 - 🟢 Chạy lại Bước 7→8b, gửi số mới: nếu **SRCC VAD > 0** → xác nhận hướng đo đúng; chốt phần cần tấn công tiếp = **TTS prosody**.
 - 🟠 Sửa phía TTS: dùng **reference audio CÓ cảm xúc** (clone bám prosody ref → ref neutral làm output neutral), tăng cfg/timesteps, thử prompt tiếng Việt.
 - 🟠 (tùy) thêm **emotion2vec** (đa ngôn ngữ) cho cột CAT tiếng Việt — giải gốc domain.

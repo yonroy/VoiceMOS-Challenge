@@ -2,7 +2,9 @@
 
 > Tài liệu tổng hợp nhanh để tra cứu / gửi mentor. Cập nhật ngày: 10/6/2026.
 
-> **Trạng thái leaderboard (cập nhật 9/6 — tốt nhất TỪNG CỘT):** Track 1 ACR/CCR = **0.662 / 0.411** · **Track 2 (best per-column): QMOS 0.548 🏆(exp07) · EMOS 0.811 🏆(exp08) · CAT err 0.133 🏆(exp08) · VAD VAL/ARO/DOM 0.659/0.793/0.751 🏆(exp08)** · Track 3 SPK/ACC = **0.451 / 0.440**. → Hệ mạnh nhất 6 cột = **trộn cột** exp08(cảm xúc)+exp07(QMOS) = **`exp_mix_q07_emo08` ✅ ĐÃ NỘP 9/6** (điểm thật khớp best-per-column). Chi tiết: `04_experiments_log.md`, `12_system_description.md`.
+> **Trạng thái leaderboard (cập nhật 10/6 — tốt nhất TỪNG CỘT):** Track 1 ACR/CCR = **0.662 / 0.411** · **Track 2 (best per-column): QMOS ~0.63 🏆(exp13, NỘP 10/6) · EMOS 0.811 🏆(exp08) · CAT err 0.133 🏆(exp08) · VAD VAL/ARO/DOM 0.659/0.793/0.751 🏆(exp08)** · Track 3 SPK/ACC = **0.451 / 0.440**. → Hệ mạnh nhất 6 cột MỚI = **trộn cột QMOS←exp13 + 5 cảm xúc←exp08 (CHƯA NỘP bản trộn)**; bản đã nộp tốt nhất = `exp_mix_q07_emo08` (9/6, QMOS 0.548). Chi tiết: `04_experiments_log.md`, `12_system_description.md`.
+>
+> 🚀 **Mốc 10/6 (Phiên 21) — exp13 PHÁ TRẦN QMOS:** fine-tune thẳng UTMOS trên nhãn `qMOS` thật → QMOS **0.548 → ~0.63** (+0.08, cột QMOS đứng yên từ 4/6 nay mới nhúc nhích). ⚠️ Cần tải scoring_result về `submissions/Track2/exp13_finetune_qmos/` ghi số chính xác + nộp bản trộn cột mới.
 >
 > 🎉 **Mốc 4/6 — exp07 hợp nhất 6 cột (HỆ THỐNG CHÍNH cho paper):** thêm **head QMOS thứ 4** (đầu vào `[trunk | UTMOS]`) vào trunk fusion exp04 → 1 model dự đoán trọn 6 cột. **QMOS 0.414→0.548** 🚀 (lần cải thiện QMOS đầu tiên, +0.134) mà **KHÔNG kéo tụt** 5 cột cảm xúc (EMOS 0.788→0.795). Tiền đề exp04: gộp emotion2vec + SAILER (đóng băng) → trunk chung → multi-task + uncertainty weighting → thắng mọi model lẻ ở cảm xúc. Điểm trừ nhỏ: CAT 0.145→0.153.
 > ➡️ **Việc tiếp:** chạy exp06 (head QMOS riêng) A/B với 0.548 để biết QMOS lên nhờ chia sẻ cảm xúc hay nhờ UTMOS-feature; ablation cho paper.
