@@ -27,11 +27,14 @@
 
 **Δ 8/6 → 9/6 (TRỘN CỘT exp_mix_q07_emo08 — ĐÃ NỘP):** lần đầu **gom đủ best-per-column vào 1 bản nộp** (QMOS exp07 0.548 + 5 cảm xúc exp08) → điểm thật khớp đúng kỳ vọng. **Không phải kỷ lục cột mới** mà là **chốt hệ 6 cột mạnh nhất bằng điểm thật** (trước đó best-per-column chỉ là mục tiêu lý thuyết, chưa có bản nộp đơn nào đạt cả 6).
 
-| 10/6 | **~0.63** 🚀 | **0.811** | **0.133** | **0.659** | **0.793** | **0.751** |
+| 10/6 | **0.6296** 🚀 | **0.8116** | **0.1331** | **0.6605** | **0.7978** 🚀 | **0.7539** |
 
-**Δ 9/6 → 10/6 (exp13 fine-tune UTMOS — ĐÃ NỘP):** QMOS **0.548 → ~0.63** (+0.08) — kỷ lục cột QMOS đầu tiên kể từ 4/6, nhờ fine-tune thẳng UTMOS trên nhãn `qMOS` thật. 5 cột cảm xúc của bản nộp exp13 KHÔNG bằng exp08 → best cảm xúc giữ nguyên. ⚠️ Số ~0.63 từ leaderboard (user báo); chờ scoring_result để ghi 4 chữ số.
+**Δ 9/6 → 10/6 (exp13 + exp15 — 2 kỷ lục cột trong 1 ngày):**
+- **QMOS 0.548 → 0.6296** (+0.082, exp13 fine-tune UTMOS trên nhãn `qMOS` thật) — cột QMOS nhúc nhích lần đầu từ 4/6.
+- **ARO 0.7933 → 0.7978** (+0.0045, exp15 Mamba head) — temporal modeling giúp đúng cột Arousal.
+- EMOS/CAT/VAL/DOM best vẫn của exp08/exp08b (exp15 thua sát nút 3 cột này).
 
-> ⚠️ Best-per-column hiện **chưa gom đủ trong 1 bản nộp**: bản nộp tốt nhất = `exp_mix_q07_emo08` (9/6, QMOS 0.548). **Việc tiếp: nộp bản trộn cột MỚI = QMOS←exp13 (0.63) + 5 cảm xúc←exp08.**
+> ⚠️ Best-per-column hiện **chưa gom đủ trong 1 bản nộp**. Bản trộn thế hệ mới = QMOS←exp13 + ARO←exp15 + EMOS/CAT/VAL/DOM←exp08 — **chưa nộp**.
 
 ---
 
@@ -47,12 +50,14 @@
 | 5/6 | exp08 | FINE-TUNE WavLM (warm-start SAILER) | 0.414¹ | **0.811** | **0.133** | **0.659** | **0.793** | **0.751** |
 | 6/6 | exp08b | RESUME exp08 (train tiếp từ ckpt) | 0.4167¹ | 0.8116 | 0.1331 | 0.6605 | 0.7904 | 0.7539 |
 | **9/6** | **exp_mix** | **TRỘN CỘT: QMOS←exp07 + 5 cảm xúc←exp08** | **0.548** | **0.811** | **0.133** | **0.659** | **0.793** | **0.751** |
-| **10/6** | **exp13** | **FINE-TUNE thẳng UTMOS cho QMOS** | **~0.63** 🚀 | ⁴ | ⁴ | ⁴ | ⁴ | ⁴ |
+| **10/6** | **exp13** | **FINE-TUNE thẳng UTMOS cho QMOS** | **0.63** 🚀 | ⁴ | ⁴ | ⁴ | ⁴ | ⁴ |
+| **10/6** | **exp15** | **WavLM ft + MAMBA head (QMOS←ckpt exp13)** | **0.6296** | 0.8070 | 0.1349 | 0.6545 | **0.7978** 🚀 | 0.7506 |
 
 ¹ exp08/exp08b QMOS ~0.414 vì **bản nộp không kèm answer.txt exp07** → rơi về fallback UTMOS (không phải model kém).
 ² exp08b ≈ exp08 (chênh không đáng kể) → xác nhận checkpoint exp08 **đã hội tụ**, resume thêm không đổi.
 ³ exp_mix = ghép cột từ exp07 (QMOS) + exp08 (EMOS/CAT/VAD) → điểm thật khớp best-per-column tại 9/6. Bản fallback an toàn cho phase Evaluation.
-⁴ exp13: QMOS 0.63 ✅ xác nhận bằng ảnh leaderboard `benchmark/final.png` (10/6; cùng ảnh hiện EMOS 0.812 · CAT 0.133 · VAL 0.661 · ARO 0.79 · DOM 0.754 ≈ exp08b); chưa tải scoring_result 4 chữ số. **Việc tiếp: nộp bản trộn QMOS←exp13 + cảm xúc←exp08.**
+⁴ exp13: QMOS 0.63 trên leaderboard (`benchmark/final.png`); cột cảm xúc bản nộp đó không bằng exp08. Số 4 chữ số 0.6296 xác nhận qua bản nộp exp15 (cùng ckpt `ft_qmos_utmos.pt`).
+⁵ exp15 (`submissions/Track2/exp15_predict/`): Mamba head **gần hòa** mean-pool exp08 — thua sát EMOS/CAT/VAL, **thắng ARO** (+0.0045, kỷ lục cột). **Việc tiếp: nộp bản trộn QMOS←exp13 + ARO←exp15 + EMOS/CAT/VAL/DOM←exp08.**
 
 ---
 

@@ -152,7 +152,8 @@ wav 16kHz (cắt 12s)
 | **exp08 FINE-TUNE WavLM (DEV NỘP, 5/6/2026)** | 0.4139 (UTMOS) | **0.811** 🏆 | **0.133** 🏆 | **0.659** 🏆 / **0.793** 🏆 / **0.751** 🏆 |
 | **exp08b RESUME exp08 (DEV NỘP, 6/6/2026)** | 0.4167 (UTMOS) | 0.8116 | 0.1331 | 0.6605 / 0.7904 / 0.7539 |
 | **🏆 exp_mix TRỘN CỘT (DEV NỘP, 9/6/2026)** | 0.548 | **0.811** 🏆 | **0.133** 🏆 | **0.659** 🏆 / **0.793** 🏆 / **0.751** 🏆 |
-| **🚀 exp13 FINE-TUNE UTMOS (DEV NỘP, 10/6/2026)** | **~0.63** 🏆 | (không bằng exp08) | — | — |
+| **🚀 exp13 FINE-TUNE UTMOS (DEV NỘP, 10/6/2026)** | **0.6296** 🏆 | (không bằng exp08) | — | — |
+| **exp15 Mamba head (DEV NỘP, 10/6/2026, QMOS←exp13)** | 0.6296 | 0.8070 | 0.1349 | 0.6545 / **0.7978** 🏆 / 0.7506 |
 
 > 🚀 **exp13 (10/6, NỘP) — KỶ LỤC QMOS MỚI 0.63:** fine-tune thẳng UTMOS trên nhãn `qMOS` thật → QMOS 0.548→**~0.63** (+0.08). Cột cảm xúc bản nộp này không bằng exp08 → **hệ 6 cột mạnh nhất MỚI = trộn cột QMOS←exp13 + 5 cảm xúc←exp08 (CHƯA nộp bản trộn này)**. ⚠️ Số ~0.63 từ leaderboard, chưa tải scoring_result về local; xem `04_` mục exp13.
 > 🏆 **exp_mix (9/6, NỘP):** ghép cột answer.txt — QMOS←exp07 (0.548) + EMOS/CAT/VAD←exp08 → điểm thật **khớp đúng best-per-column tại thời điểm đó** (QMOS 0.5480 · EMOS 0.8111 · CAT 0.1331 · VAL 0.6590 · ARO 0.7933 · DOM 0.7509). Đây là **bản fallback an toàn** cho phase Evaluation. Folder: `submissions/Track2/exp_mix_q07_emo08/`.

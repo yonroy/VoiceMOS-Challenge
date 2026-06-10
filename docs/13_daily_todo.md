@@ -43,8 +43,9 @@
 - [x] Đồng bộ điểm exp13 vào `04_` / `07_` / `12_` / `18_` / `20_`
 
 ### ➡️ VIỆC TIẾP THEO
-- [ ] 🔴 **Tải `scoring_result.zip` exp13** về `submissions/Track2/exp13_finetune_qmos/` → ghi số chính xác 4 chữ số (hiện ~0.63 user báo) + 5 cột còn lại
-- [ ] 🔴 **Ghép + NỘP bản trộn cột MỚI**: QMOS←exp13 (0.63) + 5 cảm xúc←exp08 → hệ 6 cột mạnh nhất mới (script ghép đã có từ exp_mix)
+- [x] 🔴 ~~Tải scoring_result exp13~~ → **NỘP + CHẤM bản exp15_predict 2-ckpt (10/6 chiều):** QMOS **0.6296** 🏆 (số chính xác exp13) · EMOS 0.8070 · CAT 0.1349 · VAL 0.6545 · **ARO 0.7978 🏆 KỶ LỤC CỘT** · DOM 0.7506 → `submissions/Track2/exp15_predict/`. Mamba ≈ mean-pool (ablation cho paper)
+- [ ] 🔴 **RESUME train exp15** (kế hoạch user 10/6): Add Input `cache-exp8` → notebook tự dò ckpt → train thêm (`RESUME_LR_SCALE=0.5`); chỉ ghi đè ckpt khi val TỐT HƠN; dừng sớm nếu 2–3 epoch không cải thiện (bài học exp08b: ckpt hội tụ thì train thêm vô ích) → predict lại + nộp → **kết quả cuối exp15**
+- [ ] 🔴 **Ghép + NỘP bản trộn cột MỚI** (sau khi exp15 chốt): QMOS←exp13 + **ARO←exp15** + EMOS/CAT/VAL/DOM←exp08 → hệ 6 cột mạnh nhất mới (script ghép đã có từ exp_mix)
 - [x] 🔴 **Upload ckpt lên Kaggle Dataset `cache-exp8`** — đã có ở GỐC dataset: `ft_qmos_utmos.pt` (exp13) + `ft_mamba_emotion_full.pt` (exp15); cache + ckpt cũ trong `archive/`. exp15_predict đã trỏ mặc định vào đây
 - [ ] 🔒 (vẫn nợ) revoke token HF đã lộ; smoke test exp16 (LLM-judge)
 

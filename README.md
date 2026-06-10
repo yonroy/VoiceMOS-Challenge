@@ -11,7 +11,7 @@ Dự án tham gia **VoiceMOS Challenge 2026** — cả 3 track, **dồn sức v�
 | Track | Điểm |
 |---|---|
 | **Track 1** (Speech Enhancement) | ACR/CCR = **0.662 / 0.411** (baseline) |
-| **Track 2** (Emotional TTS) | QMOS **0.63** (exp13, 10/6) · EMOS **0.812** · CAT err **0.133** · VAD VAL/ARO/DOM **0.661 / 0.79 / 0.754** |
+| **Track 2** (Emotional TTS) | QMOS **0.6296** (exp13) · EMOS **0.8116** · CAT err **0.1331** · VAD VAL/ARO/DOM **0.6605 / 0.7978 / 0.7539** (ARO = exp15 Mamba, 10/6) |
 | **Track 3** (Codec Synthesis) | SPK/ACC = **0.451 / 0.44** (baseline) |
 
 **Leaderboard CodaBench (DEV, chụp 10/6/2026):**

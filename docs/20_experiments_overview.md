@@ -31,7 +31,8 @@
 | **exp08** | FINE-TUNE WavLM (mở băng 6 lớp, warm-start SAILER) + audeering frozen | **EMOS 0.811 🏆 · CAT 0.133 🏆 · VAD 0.659/0.793/0.751 🏆** | 🏆 **cảm xúc tốt nhất** (QMOS rớt 0.414) |
 | **exp08b** | exp08 train tiếp (resume từ checkpoint) | MOS 0.4167 · EMOS 0.8116 · CAT 0.1331 · VAD 0.6605/0.7904/0.7539 | ≈ exp08 → xác nhận **đã hội tụ** |
 | **exp_mix** | TRỘN CỘT: QMOS←exp07 + 5 cảm xúc←exp08 (ghép answer.txt) | QMOS 0.548 · EMOS 0.811 · CAT 0.133 · VAD 0.659/0.793/0.751 | bản nộp mạnh nhất 9/6; nay là **fallback** (QMOS bị exp13 vượt) |
-| **exp13** | **FINE-TUNE thẳng UTMOS** trên nhãn qMOS thật (NỘP 10/6) | **QMOS ~0.63 🏆** (cảm xúc bản nộp không bằng exp08) | 🏆 **QMOS tốt nhất** — phá trần 0.548; việc tiếp: trộn cột QMOS←exp13 + cảm xúc←exp08 |
+| **exp13** | **FINE-TUNE thẳng UTMOS** trên nhãn qMOS thật (NỘP 10/6) | **QMOS 0.6296 🏆** | 🏆 **QMOS tốt nhất** — phá trần 0.548 (+0.082) |
+| **exp15** | **WavLM ft + MAMBA head** thay mean-pool (NỘP 10/6, QMOS←ckpt exp13) | QMOS 0.6296 · EMOS 0.8070 · CAT 0.1349 · VAL 0.6545 · **ARO 0.7978 🏆** · DOM 0.7506 | 🏆 **ARO tốt nhất**; Mamba ≈ mean-pool ở 4 cột còn lại → ablation cho paper |
 
 ---
 
@@ -54,7 +55,6 @@
 | exp10 | fine-tune audeering riêng + ensemble cột VAD | 5/6 | |
 | exp12 | ablation khởi tạo WavLM (scratch / base / sailer) | 8/6 | chưa chạy đủ 3 mode (trả lời mentor) |
 | exp14 | Mamba head cộng vào fusion exp07 (WavLM frame đóng băng) | 8/6 | chỉ có .py, chưa convert .ipynb |
-| **exp15** | **WavLM fine-tune + Mamba head** (thay mean-pool exp08) + ranking loss + tự dò DATA_ROOT | 8/6 | smoke-test 8/6 (mamba-ssm fail→PyTorch); chưa chạy thật |
 | **exp16** | **Audio-LLM-as-Judge** (API Gemini/GPT-4o-audio chấm 6 cột) — novelty cho paper, KHÔNG GPU | 8/6 | code xong (.py+.ipynb), cache+resume; chưa chạy (cần API key) |
 
 ---

@@ -2,9 +2,9 @@
 
 > Tài liệu tổng hợp nhanh để tra cứu / gửi mentor. Cập nhật ngày: 10/6/2026.
 
-> **Trạng thái leaderboard (cập nhật 10/6 — tốt nhất TỪNG CỘT):** Track 1 ACR/CCR = **0.662 / 0.411** · **Track 2 (best per-column): QMOS ~0.63 🏆(exp13, NỘP 10/6) · EMOS 0.811 🏆(exp08) · CAT err 0.133 🏆(exp08) · VAD VAL/ARO/DOM 0.659/0.793/0.751 🏆(exp08)** · Track 3 SPK/ACC = **0.451 / 0.440**. → Hệ mạnh nhất 6 cột MỚI = **trộn cột QMOS←exp13 + 5 cảm xúc←exp08 (CHƯA NỘP bản trộn)**; bản đã nộp tốt nhất = `exp_mix_q07_emo08` (9/6, QMOS 0.548). Chi tiết: `04_experiments_log.md`, `12_system_description.md`.
+> **Trạng thái leaderboard (cập nhật 10/6 — tốt nhất TỪNG CỘT):** Track 1 ACR/CCR = **0.662 / 0.411** · **Track 2 (best per-column): QMOS 0.6296 🏆(exp13) · EMOS 0.8116 🏆(exp08b) · CAT err 0.1331 🏆(exp08) · VAL 0.6605 🏆(exp08b) · ARO 0.7978 🏆(exp15 Mamba) · DOM 0.7539 🏆(exp08b)** · Track 3 SPK/ACC = **0.451 / 0.440**. → Hệ mạnh nhất 6 cột MỚI = **trộn cột QMOS←exp13 + ARO←exp15 + EMOS/CAT/VAL/DOM←exp08 (CHƯA NỘP bản trộn)**. Chi tiết: `04_experiments_log.md`, `12_system_description.md`.
 >
-> 🚀 **Mốc 10/6 (Phiên 21) — exp13 PHÁ TRẦN QMOS:** fine-tune thẳng UTMOS trên nhãn `qMOS` thật → QMOS **0.548 → ~0.63** (+0.08, cột QMOS đứng yên từ 4/6 nay mới nhúc nhích). ⚠️ Cần tải scoring_result về `submissions/Track2/exp13_finetune_qmos/` ghi số chính xác + nộp bản trộn cột mới.
+> 🚀 **Mốc 10/6 (Phiên 21) — 2 KỶ LỤC CỘT TRONG 1 NGÀY:** (1) **exp13** fine-tune thẳng UTMOS → QMOS **0.548 → 0.6296** (+0.082, cột đứng yên từ 4/6); (2) **exp15** Mamba head → **ARO 0.7933 → 0.7978** (NỘP bản exp15_predict 2-ckpt: cảm xúc←exp15 + QMOS←exp13; Mamba ≈ mean-pool ở 4 cột còn lại → ablation cho paper). `submissions/Track2/exp15_predict/`.
 >
 > 🎉 **Mốc 4/6 — exp07 hợp nhất 6 cột (HỆ THỐNG CHÍNH cho paper):** thêm **head QMOS thứ 4** (đầu vào `[trunk | UTMOS]`) vào trunk fusion exp04 → 1 model dự đoán trọn 6 cột. **QMOS 0.414→0.548** 🚀 (lần cải thiện QMOS đầu tiên, +0.134) mà **KHÔNG kéo tụt** 5 cột cảm xúc (EMOS 0.788→0.795). Tiền đề exp04: gộp emotion2vec + SAILER (đóng băng) → trunk chung → multi-task + uncertainty weighting → thắng mọi model lẻ ở cảm xúc. Điểm trừ nhỏ: CAT 0.145→0.153.
 > ➡️ **Việc tiếp:** chạy exp06 (head QMOS riêng) A/B với 0.548 để biết QMOS lên nhờ chia sẻ cảm xúc hay nhờ UTMOS-feature; ablation cho paper.
