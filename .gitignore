@@ -8,15 +8,26 @@ venv/
 env/
 
 # Repo baseline clone riêng (nặng, là git repo độc lập — không commit)
-vmc2026-baselines/
-UTMOS22/
-emotion2vec/
+baselines/
 
 # Python cache
 __pycache__/
 *.py[cod]
 *.egg-info/
 .ipynb_checkpoints/
+
+# Dữ liệu thô (nặng — upload lên Kaggle, không commit)
+data/
+*.tar.gz
+
+# Checkpoint & feature cache (RẤT NẶNG ~4.7GB — lưu trên Kaggle Dataset / HF, KHÔNG commit)
+cache/
+*.pt
+*.npz
+
+# Audio input/demo (nặng — không commit)
+100audio/
+*.wav
 
 # Output / submission
 *.zip

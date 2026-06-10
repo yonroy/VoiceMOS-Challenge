@@ -1,0 +1,15 @@
+gradio==6.17.3
+plotly
+torch
+torchaudio
+transformers
+huggingface_hub
+librosa
+soundfile
+speechbrain
+loralib
+scipy
+scikit-learn
+pandas
+numpy
+tqdm

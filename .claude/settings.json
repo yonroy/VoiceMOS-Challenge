@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "bash",
+            "command": "echo '{\"systemMessage\":\"📌 Nhắc nhở: gõ « đọc » để Claude đọc các file md và tóm tắt dự án đang ở đâu (mục 1 CLAUDE.md).\"}'"
+          }
+        ]
+      }
+    ]
+  }
+}
