@@ -23,6 +23,9 @@ services:
       - "8000:8000"   # Triton HTTP (KServe v2)
       - "8001:8001"   # Triton gRPC
       - "8002:8002"   # Triton metrics (Prometheus)
+    # Python backend truyền tensor qua shared memory; batch nhiều audio dễ tràn
+    # /dev/shm mặc định 64MB → nâng lên để tránh lỗi "Failed to increase shm".
+    shm_size: "2gb"
     deploy:
       resources:
         reservations:
@@ -30,12 +33,14 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    # Dùng python3 (chắc chắn có trong image -py3) thay vì curl (có thể thiếu).
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/v2/health/ready"]
+      test: ["CMD", "python3", "-c",
+             "import urllib.request,sys; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/v2/health/ready').status==200 else sys.exit(1)"]
       interval: 20s
       timeout: 10s
-      retries: 10
-      start_period: 120s
+      retries: 15
+      start_period: 180s
 
   gateway:
     build:

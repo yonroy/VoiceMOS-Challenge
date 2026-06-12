@@ -1,5 +1,10 @@
 # Thư viện cho PYTHON BACKEND của Triton (cài vào image server).
-# Image tritonserver:*-py3 ĐÃ có sẵn torch/torchaudio → KHÔNG cài lại ở đây.
+# LƯU Ý: image tritonserver:24.08-py3 CHỈ có PyTorch *backend* (libtorch C++),
+# KHÔNG có sẵn gói Python `torch` cho PYTHON backend → model.py `import torch` sẽ
+# lỗi "No module named 'torch'". Vì vậy PHẢI cài torch/torchaudio ở đây.
+# Pin 2.4.* cho khớp libtorch của Triton 24.08 (CUDA 12.x).
+torch==2.4.1
+torchaudio==2.4.1
 transformers>=4.40
 huggingface_hub>=0.23
 safetensors>=0.4

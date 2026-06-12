@@ -15,23 +15,31 @@ cd /home/nhandt23/project/VoiceMOS
 
 ---
 
-## Bước 1 — Lấy code mới nhất
+## Bước 1 — Clone code (lần đầu — server CHƯA có repo)
 
-Nếu đã có repo rồi thì pull về:
 ```bash
-git pull
+mkdir -p /home/nhandt23/project && cd /home/nhandt23/project
+
+# Repo public:
+git clone https://github.com/yonroy/VoiceMOS-Challenge.git VoiceMOS
+cd VoiceMOS
 ```
 
-Nếu chưa có (lần đầu):
-```bash
-git clone <url-repo> .
-```
+> **Nếu repo PRIVATE** (git clone hỏi mật khẩu / `Authentication failed`):
+> ```bash
+> # Tạo Personal Access Token: github.com → Settings → Developer settings →
+> #   Personal access tokens → Generate (scope: repo)
+> git clone https://<TOKEN>@github.com/yonroy/VoiceMOS-Challenge.git VoiceMOS
+> ```
+> Clone về **chỉ ~14MB** (data/ và baselines/ không nằm trong git → không bị kéo về).
 
 Kiểm tra thư mục `triton_service/` đã có chưa:
 ```bash
 ls triton_service/
 # Phải thấy: docker-compose.yml  gateway/  loadtest/  model_repository/  run_server.sh
 ```
+
+> **Lần sau cập nhật code** (đã clone rồi): `cd /home/nhandt23/project/VoiceMOS && git pull`
 
 ---
 
@@ -49,9 +57,23 @@ nvidia-smi
 # Docker có dùng GPU được không?
 docker run --rm --gpus all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi
 # Cần thấy: cùng thông tin GPU như lệnh trên
+
+# Dùng `docker compose` (v2) hay `docker-compose` (v1)?
+docker compose version || docker-compose version
+# run_server.sh dùng `docker compose` (v2). Nếu chỉ có v1, đổi lệnh thành docker-compose.
 ```
 
-> Nếu lệnh cuối lỗi "could not select device driver" → cần cài NVIDIA Container Toolkit:
+> **⚠️ KIỂM TRA QUAN TRỌNG — Python backend có `torch` không?** Code `model.py` cần `import torch`.
+> Image `tritonserver:24.08-py3` *thường* có sẵn torch, nhưng nên xác nhận TRƯỚC khi build full (kéo base ~vài GB nhưng nhanh hơn build + tải model rồi mới phát hiện lỗi):
+> ```bash
+> docker run --rm nvcr.io/nvidia/tritonserver:24.08-py3 \
+>     python3 -c "import torch; print('torch', torch.__version__, '· cuda', torch.cuda.is_available())"
+> ```
+> - **Ra `torch 2.x · cuda True`** → OK, build bình thường.
+> - **Lỗi `No module named torch`** → thêm 2 dòng vào `triton_service/model_requirements.txt`:
+>   `torch` và `torchaudio` (hoặc đổi base sang tag `*-pyt-python-py3`). Báo tôi nếu gặp.
+
+> Nếu lệnh GPU lỗi "could not select device driver" → cần cài NVIDIA Container Toolkit:
 > ```bash
 > distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 > curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
@@ -216,6 +238,42 @@ curl -s -F "file_test=@$WAV" -F "file_ref=@$WAV" \
      http://localhost:8080/track3 | python3 -m json.tool
 # Kết quả: {"spk_sim": 4.5, "acc_sim": 4.3, "cosine": 0.92}
 ```
+
+---
+
+## Bước 7B — Mở UI Gradio (tùy chọn, demo trực quan)
+
+UI là **client** kéo-thả audio → xem điểm, gọi gateway `:8080`. Có **2 cách chạy**, chọn 1:
+
+### Cách 1 — Chạy UI ngay TRÊN MÁY WINDOWS của bạn (khuyến nghị)
+UI không cần GPU, chỉ cần gọi tới gateway server. Mở **PowerShell trên máy bạn**:
+```powershell
+cd "d:\VFS\VoiceMOS Challenge 2026\triton_service\ui"
+pip install -r requirements.txt
+
+# Trỏ thẳng tới gateway trên server (thay <ip-server>)
+$env:GATEWAY_URL = "http://<ip-server>:8080"
+python app_ui.py
+# Mở http://localhost:7860 → kéo audio vào chấm
+```
+> Cần server **mở cổng 8080** cho máy bạn truy cập (cùng mạng nội bộ/VPN). Kiểm tra:
+> `curl http://<ip-server>:8080/health` từ máy bạn phải ra `{"status":"ok"}`.
+
+### Cách 2 — Chạy UI TRÊN SERVER + SSH tunnel (khi cổng server bị chặn)
+Chạy UI trên server, "đục" 1 đường hầm về máy bạn:
+```bash
+# Trên server (terminal mới):
+cd /home/nhandt23/project/VoiceMOS/triton_service/ui
+pip install -r requirements.txt
+GATEWAY_URL=http://localhost:8080 python app_ui.py   # UI chạy ở cổng 7860 trên server
+```
+```powershell
+# Trên MÁY BẠN — mở SSH tunnel đưa cổng 7860 của server về localhost:7860:
+ssh -N -L 7860:localhost:7860 nhandt23@<ip-server>
+# Rồi mở trình duyệt máy bạn: http://localhost:7860
+```
+
+> UI có **4 tab**: 🎯 Track 2 (6 cột cảm xúc) · 🔊 Track 1 (ACR/CCR) · 🗣️ Track 3 (spk/acc/cos) · 📦 Chấm hàng loạt (đo throughput). Bấm **"Kiểm tra server"** đầu trang để xác nhận 🟢 trước khi chấm.
 
 ---
 

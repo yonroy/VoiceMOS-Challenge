@@ -1,7 +1,8 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Image Triton + thư viện cho Python backend Track 2.
-# Base tritonserver:*-py3 đã có sẵn Python backend + torch/torchaudio + CUDA.
-# Ta chỉ thêm: git/ffmpeg/libsndfile (đọc audio) + transformers/librosa... (model).
+# Base tritonserver:*-py3 đã có sẵn Python backend + libtorch (PyTorch *backend* C++) + CUDA,
+# NHƯNG KHÔNG có gói Python `torch` cho Python backend → phải cài qua model_requirements.txt.
+# Ta thêm: git/ffmpeg/libsndfile (đọc audio) + torch/torchaudio/transformers/librosa... (model).
 #
 # Build:  docker build -t voicemos-triton ./triton_service
 # (xem README.md để biết lệnh `docker run` nạp model_repository)
