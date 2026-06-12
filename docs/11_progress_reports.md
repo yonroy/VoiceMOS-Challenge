@@ -4,6 +4,141 @@
 
 ---
 
+## Báo cáo ngày 12/6/2026 (Phiên 24) — hoàn thiện Triton serving cho CẢ 3 TRACK (theo mentor) + gateway API + dynamic batching thật + Locust loadtest + UI 3 track + 2 tài liệu hướng dẫn
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** dựng trọn `triton_service/` theo đúng yêu cầu mentor (server Linux 1×GPU 12GB nội bộ): Triton serving 3 track, API "upload audio → trả score", xử lý dynamic batching cho audio khác độ dài, loadtest Locust. Không chạy thí nghiệm/đổi leaderboard — đây là phần **triển khai serving**.
+
+### 1. 🏗️ Kiến trúc đích (mentor giao)
+```
+client --(POST multipart .wav)--> FastAPI gateway :8080 --(tritonclient)--> Triton :8000
+                                                                              ├ track2_emotion (py backend, dyn-batch)
+                                                                              ├ track1_acr
+                                                                              └ track3_sim
+        <--------------- JSON score (6 cột / ACR-CCR / spk-acc-cos) ---------
+Triton metrics :8002 · docker-compose · mạng nội bộ
+```
+- Bỏ hướng Kaggle/PyTriton (xóa `triton_service/kaggle/`) — chuyển hẳn sang Docker trên server Linux.
+
+### 2. ⚡ Dynamic batching THẬT (phần lõi mentor nhấn mạnh)
+- Input audio để kiểu **TYPE_STRING shape `[1]`** → mỗi request đóng 1 blob bytes **cố định shape** bất kể audio dài/ngắn → Triton gom batch được. `config.pbtxt`: `max_batch_size: 8` + `dynamic_batching { max_queue_delay_microseconds: 5000 }`.
+- `execute()` Track 2 viết lại theo batch thật: gom N request → decode N audio (độ dài khác nhau) → **pad tới audio dài nhất + dựng attention_mask** → **1 forward WavLM gộp** (masked-mean tôn trọng độ dài thật) → heads → tách kết quả. Audeering/QMOS vẫn loop (nhẹ hơn WavLM). Track 3 cũng pad cặp test+ref → 1 forward; Track 1 dùng `infer(list)` batch tự nhiên.
+
+### 3. 📦 File đã tạo trong `triton_service/`
+- **3 model Triton:** `model_repository/{track2_emotion,track1_acr,track3_sim}/{config.pbtxt,1/model.py}` (Track2 port từ exp08; Track1 từ URGENT-MOS; Track3 từ ECAPA-TDNN spk+acc).
+- **Gateway:** `gateway/{app.py,Dockerfile,requirements.txt}` — FastAPI `/track1 /track2 /track3 /health`, nhận multipart → gọi Triton → JSON.
+- **Loadtest:** `loadtest/{locustfile.py,requirements.txt}` — Locust HttpUser ramp user, đo RPS + latency cả 3 track; có kịch bản so `max_batch_size 1 vs 8`.
+- **Hạ tầng:** `docker-compose.yml` (triton + gateway, GPU passthrough, healthcheck) + `run_server.sh` (Linux); giữ `run_local.ps1` tham khảo Windows.
+- **UI:** viết lại `ui/app_ui.py` thành **4 tab** (3 track + batch đo throughput), gọi **gateway :8080** bằng `requests` (bỏ `tritonclient`); ô "Gateway URL" + nút kiểm tra `/health`.
+
+### 4. 📚 2 tài liệu hướng dẫn (FILE MỚI trong `docs/`)
+- `docs/23_triton_system_overview.md` — "những điểm cần hiểu để nắm hệ thống": luồng dữ liệu, vì sao 2 tầng gateway+Triton, model nạp khi nào (initialize 1 lần / execute mỗi request), dynamic batching, 3 model trong 12GB VRAM, Locust, bảng file.
+- `docs/24_server_deploy_guide.md` — guide 9 bước chạy thật trên server: SSH → git pull → kiểm Docker/GPU → HF_TOKEN → **upload wav từ máy local bằng `scp`** (4A) → `bash run_server.sh` → curl test từng track → Locust 20 user → so batch 1 vs 8; kèm bảng xử lý lỗi.
+
+### 5. 🧠 Buổi học (người mới) — đã giải thích trong session
+- Dynamic batching = gom nhiều audio xử lý 1 lần thay vì tuần tự; pad + attention_mask để batch audio khác độ dài; **workers (client) ≠ batch (server)** — workers phải ≥ max_batch_size để "nuôi" batch.
+- 3 cổng phân biệt: **7860** UI Gradio · **8089** Locust dashboard · **8080** gateway API (cả UI lẫn Locust gọi vào). Tab batch UI = "nếm thử", Locust = "đo chính thức" (mentor yêu cầu).
+- Gateway vs Triton: gateway nói HTTP/multipart với người dùng, Triton chỉ nhận tensor → gateway là người dịch wav→tensor.
+
+### 6. Việc tiếp theo
+- 🟠 **Chạy thật trên server** (`/home/nhandt23/project/VoiceMOS`): build image, `bash run_server.sh`, curl test 3 track, đối chiếu điểm Track 2 với api_service cũ (phải khớp vì cùng ckpt exp08).
+- 🟠 **Locust loadtest**: upload vài wav mẫu, ramp 20 user, ghi RPS/p95; so `max_batch_size 1 vs 8` lấy số cho slide/paper.
+- 🟢 Verify VRAM 3 model < 12GB (`nvidia-smi`); nếu căng giảm `count` hoặc lazy-load.
+- 🔒 (vẫn nợ từ phiên trước) revoke token HF lộ; ablation ranking exp13; nộp bản trộn cột mới.
+
+---
+
+## Báo cáo ngày 11/6/2026 (Phiên 23) — slide v2 paper-style 36 slide + kịch bản thuyết trình + buổi học metric/layer 3 track + phát hiện ranking loss trong code
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** hoàn thiện bộ tài liệu present (deck v2 + script + thực đơn thiết kế model); buổi học rất dài đào sâu cách chấm + từng layer cả 3 track; soi code phát hiện trạng thái thật của ranking loss exp13/exp15. Không chạy thí nghiệm mới, leaderboard không đổi.
+
+### 1. 🎞️ Slide v2 paper-style (FILE MỚI `docs/22_slides_v2_paper_style.md` → `slide/voicemos2026_slides_v2.html`)
+- **36 slide** theo mạch paper (Intro → Metrics → T1 → T3 → T2 đầy đủ → Conclusion), theme Apple-clean giữ từ v1, 5 hình SVG render OK (254KB).
+- Nội dung MỚI so với v1: cách chấm có **ví dụ tính tay** (2 tầng điểm, SRCC bảng 5 audio, công thức CAT-ERR chính thức từ `reference/content_btc/track2.txt`); **bảng từng layer cả 3 track** (Vào→Ra→Train?→Vai trò, đúng số chiều từ code); slide "giải phẫu 3 head" (one-hot 517 / softmax / ×σ+μ); training details (uncertainty weighting, ACCUM, AMP); exp13 thành Method 3 riêng; ablation Mamba; **số liệu 10/6** (best-per-column QMOS 0.6296 · ARO 0.7978).
+- v1 (`21_`) cũng được bổ sung 2 slide giải nghĩa metric + render lại HTML. Cập nhật tham chiếu trong `README.md` + `CLAUDE.md`.
+
+### 2. 🎤 Kịch bản thuyết trình (FILE MỚI `slide/voicemos2026_v2_script.md`)
+- Lời thoại từng slide cho cả 36 slide (NÓI/NHẤN/⏱), tổng ~33 phút, Track 2 chiếm 15 phút; kèm **5 câu Q&A dự phòng** + mẹo rút xuống 20 phút.
+
+### 3. 🍱 "Thực đơn lắp ráp model" (FILE MỚI `slide/model_design_menu.md`)
+- Bảng tra "tính chất đề bài → linh kiện kiến trúc" 4 nhóm (giác quan đầu vào / khớp nối / cửa ra / cách dạy), mỗi dòng kèm công thức + ví dụ thật trong dự án; checklist 5 câu hỏi trước khi xây model; ví dụ lắp ráp 60 giây.
+
+### 4. 🔍 Phát hiện khi soi code (quan trọng cho ablation)
+- **exp13 kỷ lục QMOS 0.6296 dùng MSE THUẦN** (`RANK_LAMBDA=0`) — ranking loss có sẵn (mẹo cửa sổ ACCUM=16 → 120 cặp/cửa sổ dù BATCH=1) nhưng TẮT; đính chính nhận định trước: cải thiện QMOS đến từ fine-tune đúng domain, KHÔNG phải ranking.
+- **exp15 ĐANG BẬT `RANK_LAMBDA=0.3`** cho 4 cột SRCC (CAT giữ soft-CE — đúng vì CAT chấm ERR) nhưng ghép cặp theo batch, BATCH=2 → **chỉ 1 cặp/forward, tín hiệu yếu** (code tự ghi chú).
+- **exp13 CHƯA có cơ chế resume** (luôn train từ UTMOS zero-shot). Chốt 2 phương án ablation ranking: **A** = chỉ đổi `RANK_LAMBDA=0.3` (so sạch MSE vs MSE+rank cùng xuất phát, cho paper); **B** = vá ~8 dòng resume từ ckpt 0.6296 + giảm LR (săn kỷ lục). Khuyên A trước; ranking mạnh nhất ở exp06/07 (BATCH=64 → 2.016 cặp, cache sẵn).
+
+### 5. 📚 Buổi học (người mới) — cô đọng vào `03_`
+- 2 tầng điểm (audio vs model) · SRCC tính tay + **phạt theo d², không đếm số câu sai** (cùng "đúng 3/5" có thể ra 0.9 / 0.6 / −0.6) · CAT-ERR = MAE bảng N×5 · ranking loss = đổi xếp-hạng-toàn-cục thành so-cặp · gradient ACCUM ("cầm lên ghi sổ thả xuống, chân đứng yên") · từng layer Track 1 (URGENT-MOS: trộn lớp αₗ, AMPM/NCPM hiệu 2 nhánh, thang CCR ±3 chuẩn ITU) + Track 3 (đọc code `model.py`: TDNN giãn nở, SE-block, stat-pool [μ‖σ], interaction vector, bẫy projection chưa-train) · CNN→Transformer ví dụ toán tính tay (contextual embedding: cùng vector [1,0] ra 2 nghĩa khác nhau theo ngữ cảnh) · WavLM masked prediction (che-đoán cụm k-means + cố tình phá nhiễu) · pretrain vs fine-tune vs scratch (SAILER = intermediate fine-tuning, đóng vai pretrained ckpt với mình) · zero-shot trong exp13 = đối chứng + sàn an toàn + khám pipeline.
+
+### 6. Việc tiếp theo
+- 🟢 **Export PDF/PPTX slide v2** gửi mentor (thêm `--allow-local-files`); present theo script.
+- 🟠 **Ablation ranking exp13** (phương án A trước): đổi `RANK_LAMBDA=0.3`, nếu OOM giảm ACCUM 16→8 hoặc MAX_SEC 12→8; ghi config→kết quả→nhận xét vào `04_`.
+- 🔴 (kế thừa P21) RESUME exp15 + **nộp bản trộn cột mới** (QMOS←exp13 + ARO←exp15 + còn lại←exp08).
+- 🔒 (vẫn nợ) revoke token HF lộ; smoke test exp16.
+
+---
+
+## Báo cáo ngày 11/6/2026 (Phiên 22) — EMOS thật cho 100 audio tiếng Việt (qua API) + buổi học SRCC thực tế · calibration · CAT-ERR
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** hoàn thiện vòng đánh giá VoxCPM2 tiếng Việt — chấm lại 100 audio qua API HF Space để lấy **cột EMOS thật** (lần trước thiếu vì không truyền target); buổi học về ý nghĩa SRCC khi triển khai thực tế.
+
+### 1. ⭐ Chấm lại 100 audio với `target_emotion=happy` → EMOS thật
+- Phát hiện `100audio_emotion_scores.csv` (Phiên 20–21) **không có cột `emos`** — head EMOS cần one-hot target mà lần chấm trước không truyền. Dùng lại `score_100audio.py --target happy --out 100audio_emotion_scores_happy.csv` (file MỚI — nếu ghi vào file cũ, resume sẽ bỏ qua cả 100 file đã chấm).
+- Chạy 100/100 OK qua `https://tranminhtoan140601-voicemos2026-api.hf.space` (~8–10s/file, nhanh hơn dự kiến vì Space đã nạp model). Gotcha Windows: `UnicodeEncodeError` cp1252 khi print tiếng Việt → fix `PYTHONIOENCODING=utf-8`.
+
+### 2. 🔬 Kết quả EMOS (target happy, thang 1–5)
+- **Dải 1.872 → 3.364, mean 2.745** — value lệch xuống do domain tiếng Việt (DEV tiếng Anh thường 4+), đúng pattern "chỉ tin thứ hạng".
+- **Top 5 tốt nhất:** sample_010 (3.364) · sample_024 (3.358) · sample_085 (3.339) · sample_046 (3.190) · sample_091 (3.190). **Top 5 tệ nhất:** sample_083 (1.872) · sample_094 (2.088) · sample_069 (2.126) · sample_028 (2.174) · sample_008 (2.189).
+- **Tốt nhất toàn diện = sample_024** (EMOS hạng 2 + QMOS hạng 7/100 — ngoại lệ hiếm phá trade-off "biểu cảm cao thì QMOS tụt"; top 5 QMOS còn lại toàn neutral/arousal thấp). Khớp cảm xúc nhất = sample_010.
+- **SRCC(EMOS thật, proxy cat_happy) = 0.9496 · SRCC(EMOS, valence) = 0.9661** → proxy cat_happy là xấp xỉ rất tốt khi không truyền target; head hồi quy EMOS phân tách tốt/tệ rõ dù argmax vẫn neutral-bias (32/100 happy).
+
+### 3. 🧠 Buổi học (ghi cô đọng vào `03_`)
+- SRCC vs giá trị tuyệt đối khi triển khai thực tế: việc nào chỉ cần ranking (so model, reranking, regression test) vs việc nào cần value thật (báo MOS khách hàng, ngưỡng release); **calibration** (linear/isotonic/z-score) chữa thang đo mà không đổi SRCC.
+- So 2 model TTS: trung bình **điểm** theo hệ thống (system-level, như SYS-SRCC của BTC), nên dùng cùng câu (paired, Wilcoxon); 10 mẫu/model là ít nếu điểm sát nhau.
+- Công thức **CAT-ERR** = MAE trên phân bố vote 5 cảm xúc, dải [0, 0.4]; khác SRCC ở chỗ value tuyệt đối CÓ nghĩa → softmax "mềm" là lợi thế.
+
+### 4. Việc tiếp theo (giữ nguyên từ Phiên 21)
+- 🔴 RESUME train exp15 (`RESUME_LR_SCALE=0.5`, dừng sớm nếu 2–3 epoch không cải thiện) → predict + nộp.
+- 🔴 Nộp bản trộn cột mới: QMOS←exp13 + ARO←exp15 + EMOS/CAT/VAL/DOM←exp08.
+- 🔒 (vẫn nợ) revoke token HF lộ; smoke test exp16; (mới) nghe tai 3 file sample_024/010/099 để kiểm chứng ranking bộ chấm trên tiếng Việt.
+
+---
+
+## Báo cáo ngày 10/6/2026 (Phiên 21) — 🚀 2 KỶ LỤC CỘT/NGÀY: exp13 QMOS 0.6296 + exp15 Mamba ARO 0.7978 + vẽ kiến trúc + buổi học layer
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** ngày bứt phá leaderboard — 2 bản nộp DEV lập 2 kỷ lục cột; hoàn thiện tài liệu kiến trúc cho system description/paper; buổi học sâu kiến trúc từng layer.
+
+### 1. 🏆 exp13 NỘP — phá trần QMOS sau 6 ngày đứng yên
+- Fine-tune thẳng UTMOS (`utmos22_strong`) trên nhãn `qMOS` thật → **QMOS 0.548 → 0.6296** (+0.082). Xác nhận kép: ảnh leaderboard `benchmark/final.png` (0.63) + `scores.json` bản nộp exp15 (0.6296, cùng ckpt).
+- Ý nghĩa: giả thuyết "UTMOS lệch domain giọng cảm xúc" đúng — fine-tune về domain thắng head frozen + neo (exp07 0.548) thắng zero-shot (0.414).
+
+### 2. 🏆 exp15 NỘP (bản `exp15_predict` nạp 2 ckpt) — Mamba head có điểm thật
+- Sửa `exp15_predict` nạp **2 checkpoint**: cảm xúc←`ft_mamba_emotion_full.pt` (exp15) + QMOS←`ft_qmos_utmos.pt` (exp13); ưu tiên QMOS: exp13 > exp07 answer > UTMOSv2; đường dẫn mặc định trỏ Kaggle Dataset `cache-exp8` (giờ chứa đủ: 2 ckpt mới ở gốc + ckpt exp08/exp11 + cache audeering trong `archive/`).
+- Điểm DEV (`submissions/Track2/exp15_predict/scores/scores.json`): QMOS **0.6296** · EMOS 0.8070 · CAT 0.1349 · VAL 0.6545 · **ARO 0.7978 🏆 (kỷ lục, vượt exp08 0.7933)** · DOM 0.7506.
+- **Kết luận ablation Mamba vs mean-pool: GẦN HÒA** — thua sát nút 3 cột, thắng đúng Arousal (cột biến thiên theo thời gian rõ nhất) → dòng ablation giá trị cho paper. Ckpt exp15 (8/6) hóa ra KHÔNG phải smoke-test.
+- Best-per-column mới: QMOS 0.6296 (exp13) · EMOS 0.8116 (exp08b) · CAT 0.1331 (exp08) · VAL 0.6605 (exp08b) · **ARO 0.7978 (exp15)** · DOM 0.7539 (exp08b).
+
+### 3. Vẽ kiến trúc từng layer hệ tốt nhất (cho system description + paper)
+- Mục mới **exp_mix** trong `04_`: sơ đồ ASCII 2 nhánh (exp08: WavLM ft 6 lớp + audeering 1027-D → concat 2051 → trunk 512 → 3 head; exp07: e2v 1029 + SAILER 1036 + UTMOS → trunk → 4 head) + bảng vai trò từng layer đúng số chiều từ code.
+- `12_system_description.md` Track 2: điền mục 1–4 (tổng quan exp_mix, HÌNH 2a–2d gồm cả nhánh B v2 = exp13, external resources + license phi thương mại, chiến lược training).
+
+### 4. Buổi học (người mới) — ghi cô đọng vào `03_`
+- Kiến trúc exp08 "2 tai → 1 não → 3 miệng" từng layer; vì sao head EMOS cần one-hot target.
+- Mamba vs mean-pool (selective SSM, attention-pooling, O(n)) — và kết quả thật xác nhận "gần hòa, thắng ARO".
+- z-score μ/σ lưu trong ckpt; `load_state_dict` thiếu/dư key; vì sao khâu load không ăn GPU (nghẽn mạng/disk; HF_TOKEN phải attach + set env trước `from_pretrained`).
+
+### 5. Việc khác
+- Nhận xét `100audio_emotion_scores.csv` (100/100): neutral-bias rõ (68 neutral/32 happy; khử neutral → 97 happy), QMOS thấp đồng loạt (lệch domain — chỉ dùng xếp hạng), VAD dải hẹp nhưng đúng hướng.
+- README: nhúng ảnh leaderboard `benchmark/final.png` + mục slide (đổi tên `voicemos2026_final (1).html` → `voicemos2026_slides.html`, sửa link chết) + bảng điểm 4 chữ số.
+- Git: 2 commit push (`967061d`, `41665df`); remote đổi sang repo mới `yonroy/VoiceMOS-Challenge` (repo được đổi tên).
+
+### 6. Việc tiếp theo
+- 🔴 **RESUME train exp15** (kế hoạch user): Add Input `cache-exp8` → tự dò ckpt → `RESUME_LR_SCALE=0.5`; dừng sớm nếu 2–3 epoch không cải thiện (bài học exp08b). Sau đó predict + nộp = kết quả cuối exp15.
+- 🔴 **Nộp bản trộn cột thế hệ mới**: QMOS←exp13 + ARO←exp15 + EMOS/CAT/VAL/DOM←exp08 (0 giờ GPU, chốt hệ 6 cột mạnh nhất; khuyên làm TRƯỚC resume).
+- 🔒 (vẫn nợ) revoke các token HF đã lộ (Phiên 16/19); smoke test exp16 (LLM-judge); VoxCPM2 Bước 7→8b (Phiên 20).
+
+---
+
 ## Báo cáo ngày 10/6/2026 (Phiên 20) — client Kaggle gọi API 3 track + notebook VoxCPM2 "sinh emotion → chấm điểm" (vòng lặp emotional ruler) + sửa metric khử neutral-bias 🎯
 
 **Người thực hiện:** Tran Minh Toan · **Nội dung:** dựng notebook đánh giá **TTS cảm xúc** bằng chính bộ chấm Track 2 (đúng góc "emotional ruler" của paper §1); phát hiện + xử lý **neutral-bias trên tiếng Việt** bằng metric ranking.

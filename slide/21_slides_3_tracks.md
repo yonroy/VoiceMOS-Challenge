@@ -108,7 +108,7 @@ Hướng tới paper ICASSP 2027
 
 ## Nội dung trình bày
 
-1. **Bối cảnh** — VoiceMOS là gì? Metric SRCC. So sánh 3 track
+1. **Bối cảnh** — VoiceMOS là gì? So sánh 3 track + giải nghĩa 10 cột metric
 2. **Track 1** — Speech Enhancement *(dùng baseline)*
 3. **Track 3** — Codec synthesis *(dùng baseline)*
 4. **Track 2 ⭐ — Emotional TTS** *(hệ thống tự phát triển)*
@@ -143,6 +143,37 @@ Hướng tới paper ICASSP 2027
 
 > Track 1 & 3: chạy baseline chính thức để có mặt trên leaderboard.
 > Track 2: dồn toàn lực — đây là phần đóng góp khoa học.
+
+---
+
+## Giải nghĩa metric (1/2) — cách đọc điểm + Track 1 & 3
+
+**3 ký hiệu lặp lại ở mọi cột:**
+
+| Ký hiệu | Nghĩa | Tốt khi |
+|---|---|---|
+| **UTT** | chấm theo **từng câu** (utterance), không gộp theo hệ thống | — |
+| **SRCC** | tương quan **thứ hạng** Spearman với điểm người chấm (−1 → 1) | ⬆ gần 1 |
+| **ERR** | sai số (sai lệch phân bố cảm xúc) | ⬇ càng thấp |
+
+**Track 1 — Speech Enhancement (2 cột):** **ACR** = người nghe chấm chất lượng *tuyệt đối* 1 audio (1–5) · **CCR** = người nghe *so sánh 2 audio* (−3 → +3). Model đoán 2 điểm này khớp người tới đâu (SRCC).
+
+**Track 3 — Codec Synthesis (2 cột):** **SPK sim** = độ giống *người nói* so với reference · **ACC sim** = độ giống *chất giọng vùng miền (accent)* so với reference.
+
+---
+
+## Giải nghĩa metric (2/2) — 6 cột Track 2 ⭐
+
+| Cột | Là gì | Tốt khi | Bắt buộc |
+|---|---|---|---|
+| **QMOS** | chất lượng giọng 1–5: tự nhiên, sạch không | SRCC ⬆ | ✅ |
+| **EMOS** | độ khớp **cảm xúc target** 1–5: có đúng cảm xúc được yêu cầu không | SRCC ⬆ | ✅ |
+| **CAT** | sai lệch **phân bố 5 cảm xúc** người nghe cảm nhận (angry/happy/neutral/sad/surprised) | ERR ⬇ | ⬜ |
+| **Valence** | trục *tích cực ↔ tiêu cực* của cảm xúc | SRCC ⬆ | ⬜ |
+| **Arousal** | trục *năng lượng*: bình tĩnh ↔ phấn khích | SRCC ⬆ | ⬜ |
+| **Dominance** | trục *chi phối*: rụt rè ↔ mạnh mẽ | SRCC ⬆ | ⬜ |
+
+> 💡 SRCC chỉ cần đúng **thứ tự** cao–thấp, không cần đúng giá trị tuyệt đối. ⚠️ Riêng **CAT là ERR (thấp = tốt)** — ngược chiều 5 cột còn lại. **VAD** = mô tả cảm xúc bằng 3 trục số thay vì nhãn rời rạc.
 
 ---
 

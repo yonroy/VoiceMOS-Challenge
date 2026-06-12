@@ -78,7 +78,8 @@ VoiceMOS Challenge 2026/
 | [18_leaderboard_history.md](docs/18_leaderboard_history.md) | Lịch sử leaderboard qua các ngày |
 | [19_paper_v1_en.md](docs/19_paper_v1_en.md) | **Bản paper v1 (TIẾNG ANH)** để nộp ICASSP |
 | [20_experiments_overview.md](docs/20_experiments_overview.md) | Bảng trạng thái nhanh các exp |
-| [21_slides_3_tracks.md](docs/21_slides_3_tracks.md) | Slide present 3 track (Marp) |
+| [21_slides_3_tracks.md](docs/21_slides_3_tracks.md) | Slide present 3 track (Marp) — bản v1 ngắn |
+| [22_slides_v2_paper_style.md](docs/22_slides_v2_paper_style.md) | **Slide v2 (paper-style, ~36 slide)** — bài toán + cách chấm có ví dụ + từng layer 3 track + training + ablation |
 
 ---
 
@@ -97,9 +98,9 @@ VoiceMOS Challenge 2026/
 **📦 Checkpoint & code (HF Models):** `tranminhtoan140601/voicemos2026-track2-emotion` (checkpoint) · `…/voicemos2026-code` (pipeline).
 
 **🎞️ Slide thuyết trình 3 track (mentor giao):**
-- Bản render HTML (mở thẳng bằng trình duyệt): [slide/voicemos2026_slides.html](slide/voicemos2026_slides.html)
-- Nguồn Marp (markdown + 4 hình kiến trúc SVG inline): [docs/21_slides_3_tracks.md](docs/21_slides_3_tracks.md)
-- Render lại / export PDF-PPTX: `npx @marp-team/marp-cli docs/21_slides_3_tracks.md --html --no-stdin -o slide/voicemos2026_slides.html` (bắt buộc cờ `--html` để hiện hình SVG; thiếu `--no-stdin` sẽ treo).
+- **v2 paper-style (~36 slide, khuyên dùng):** HTML [slide/voicemos2026_slides_v2.html](slide/voicemos2026_slides_v2.html) · nguồn [docs/22_slides_v2_paper_style.md](docs/22_slides_v2_paper_style.md) — thêm cách chấm (SRCC/CAT-ERR ví dụ tính tay), bảng từng layer cả 3 track, training details, ablation, số liệu 10/6 (QMOS 0.6296 · ARO 0.7978).
+- v1 ngắn (~23 slide): HTML [slide/voicemos2026_slides.html](slide/voicemos2026_slides.html) · nguồn [docs/21_slides_3_tracks.md](docs/21_slides_3_tracks.md)
+- Render lại / export PDF-PPTX: `npx @marp-team/marp-cli docs/22_slides_v2_paper_style.md --html --no-stdin -o slide/voicemos2026_slides_v2.html` (bắt buộc cờ `--html` để hiện hình SVG; thiếu `--no-stdin` sẽ treo).
 
 ---
 

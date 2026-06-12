@@ -1,0 +1,4 @@
+# Cho máy chạy benchmark (client). FastAPI gọi bằng urllib chuẩn → không cần `requests`.
+tritonclient[http]>=2.40
+numpy>=1.24,<2.0
+matplotlib>=3.7   # chỉ cần nếu dùng --plot

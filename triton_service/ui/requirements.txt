@@ -1,0 +1,5 @@
+# Cho MÁY CHẠY UI (client) — KHÔNG phải server Triton.
+# UI gọi gateway :8080 bằng HTTP (requests), không nói chuyện trực tiếp với Triton.
+gradio>=4.0
+requests>=2.31
+numpy>=1.24,<2.0

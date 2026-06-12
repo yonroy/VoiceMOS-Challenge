@@ -35,6 +35,39 @@
 
 ---
 
+## ✅ NGÀY 12/6/2026 (Phiên 24) — Triton serving 3 track + gateway API + dynamic batching thật + Locust + UI 3 track
+- [x] 🏗️ **Dựng trọn `triton_service/` cho 3 track** (theo mentor: server Linux 1×GPU 12GB): 3 model Triton `model_repository/{track2_emotion,track1_acr,track3_sim}` (port từ exp08 / URGENT-MOS / ECAPA); xóa `kaggle/` (bỏ PyTriton)
+- [x] ⚡ **Dynamic batching thật**: `config.pbtxt` `max_batch_size:8` + `dynamic_batching{}`; `execute()` Track2 pad + attention_mask → 1 WavLM forward gộp; Track3 pad cặp; Track1 `infer(list)`
+- [x] 🌐 **Gateway FastAPI** `gateway/{app.py,Dockerfile,requirements.txt}`: `/track1 /track2 /track3 /health` (multipart → Triton → JSON)
+- [x] 🐝 **Locust loadtest** `loadtest/{locustfile.py,requirements.txt}`: ramp user, RPS+latency 3 track, kịch bản so batch 1 vs 8
+- [x] 🐳 **docker-compose.yml + run_server.sh** (triton+gateway, GPU, healthcheck); giữ run_local.ps1
+- [x] 🖥️ **Viết lại UI** `ui/app_ui.py` 4 tab (3 track + batch throughput), gọi gateway :8080 bằng `requests` (bỏ tritonclient)
+- [x] 📚 **2 tài liệu**: `docs/23_triton_system_overview.md` (nắm hệ thống) + `docs/24_server_deploy_guide.md` (9 bước chạy thật + scp upload wav + xử lý lỗi)
+- [ ] 🟠 **Chạy thật trên server** `/home/nhandt23/project/VoiceMOS`: build image, `bash run_server.sh`, curl test 3 track, đối chiếu điểm T2 với api_service (cùng ckpt phải khớp)
+- [ ] 🟠 **Locust**: upload wav mẫu, ramp 20 user, ghi RPS/p95; so `max_batch_size 1 vs 8`
+- [ ] 🟢 Verify VRAM 3 model < 12GB (`nvidia-smi`)
+
+---
+
+## ✅ NGÀY 11/6/2026 (Phiên 23) — slide v2 paper-style + script thuyết trình + buổi học metric/layer 3 track
+- [x] 🎞️ **Slide v2 paper-style 36 slide** (`docs/22_slides_v2_paper_style.md` → render `slide/voicemos2026_slides_v2.html`, 5 SVG OK): cách chấm có ví dụ tính tay (SRCC + CAT-ERR) + bảng từng layer cả 3 track + giải phẫu 3 head + training details + ablation + số liệu 10/6; v1 (`21_`) thêm 2 slide metric + render lại; cập nhật README/CLAUDE.md
+- [x] 🎤 **Kịch bản thuyết trình** (`slide/voicemos2026_v2_script.md`): NÓI/NHẤN/⏱ cho 36 slide, ~33 phút + 5 câu Q&A dự phòng + mẹo rút 20 phút
+- [x] 🍱 **Thực đơn lắp ráp model** (`slide/model_design_menu.md`): tra "tính chất đề bài → linh kiện" 4 nhóm + checklist 5 câu + ví dụ 60s
+- [x] 🔍 **Soi code ranking loss**: exp13 kỷ lục = MSE thuần (`RANK_LAMBDA=0`, cửa sổ 16→120 cặp nhưng TẮT, CHƯA có resume); exp15 BẬT λ=0.3 nhưng BATCH=2 → 1 cặp/forward (yếu) → chốt 2 phương án ablation A/B
+- [ ] 🟢 **Export PDF/PPTX slide v2** gửi mentor: `npx @marp-team/marp-cli docs/22_slides_v2_paper_style.md --html --allow-local-files --no-stdin -o slides_v2.pdf`
+- [ ] 🟠 **Ablation ranking exp13 (phương án A)**: chỉ đổi `RANK_LAMBDA=0.3` (so sạch MSE vs MSE+rank); OOM → ACCUM 16→8; ghi `04_`. (Phương án B = vá ~8 dòng resume từ ckpt 0.6296 + LR×0.5 — làm sau nếu A có tín hiệu)
+
+---
+
+## ✅ NGÀY 11/6/2026 (Phiên 22) — EMOS thật cho 100 audio tiếng Việt (chấm qua API)
+- [x] **Chấm lại 100 audio VoxCPM2 với `target_emotion=happy`** qua API HF Space → `100audio_emotion_scores_happy.csv` (100/100, ~8–10s/file) — lấy được cột **EMOS thật** mà file cũ thiếu; gotcha: phải `PYTHONIOENCODING=utf-8` + ghi file out MỚI (resume bỏ qua file đã chấm)
+- [x] **Xếp hạng EMOS**: top = sample_010 (3.364) · **tốt nhất toàn diện = sample_024** (EMOS 3.358 + QMOS top 7); bét = sample_083 (1.872); dải 1.87–3.36 mean 2.745 (value lệch domain tiếng Việt — chỉ tin ranking); SRCC(EMOS, cat_happy proxy) = 0.95
+- [x] Buổi học: SRCC khi triển khai thực tế + calibration (linear/isotonic — không đổi SRCC) + so 2 model TTS (trung bình điểm system-level, paired) + công thức CAT-ERR → ghi `03_`
+- [ ] 🎧 (mới) **Nghe tai 3 file** sample_024 / sample_010 / sample_099 đối chiếu ranking bộ chấm (bằng chứng "ranking dùng được trên tiếng Việt" cho paper)
+- [ ] 💡 (ý tưởng paper) Mục "practical deployment": calibration tuyến tính trên ~50–100 file tiếng Việt chấm tay nếu muốn báo MOS tuyệt đối
+
+---
+
 ## ✅ NGÀY 10/6/2026 (Phiên 21) — 🚀 exp13 NỘP: QMOS 0.548→~0.63 (kỷ lục cột QMOS) + vẽ kiến trúc exp_mix
 - [x] 🚀 **Chạy + NỘP exp13** (fine-tune thẳng UTMOS trên nhãn qMOS) → **QMOS ~0.63** DEV — phá trần exp07 0.548 (trả nợ kéo dài từ Phiên 10); cột cảm xúc bản nộp không bằng exp08
 - [x] **Vẽ kiến trúc từng layer hệ tốt nhất** (exp_mix: nhánh exp08 + exp07 + exp13 v2) → mục mới trong `04_` + mục 1–4 Track 2 của `12_system_description.md` (sơ đồ ASCII + bảng layer + external resources + training)

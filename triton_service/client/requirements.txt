@@ -1,0 +1,3 @@
+# Chỉ cần cho MÁY CLIENT (máy bắn audio) — KHÔNG phải cho server Triton.
+tritonclient[http]>=2.40
+numpy>=1.24,<2.0

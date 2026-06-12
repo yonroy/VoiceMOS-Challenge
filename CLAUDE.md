@@ -150,7 +150,8 @@ Quy ước trạng thái (cửa sổ context của Opus 4.8 = ~1M token):
 | `docs/18_leaderboard_history.md` | **Lịch sử leaderboard qua các ngày** (best-per-column + từng bản nộp) |
 | `docs/19_paper_v1_en.md` | **Bản paper v1 (TIẾNG ANH)** — start version để nộp ICASSP (15_ là nháp tư duy tiếng Việt) |
 | `docs/20_experiments_overview.md` | **Bảng trạng thái nhanh các exp** (đã nộp / đã chạy / mới code) — nhìn 1 phát biết đã làm gì |
-| `docs/21_slides_3_tracks.md` | **Slide present 3 track** (mentor giao) — Marp markdown tiếng Việt + 3 hình kiến trúc SVG inline; render cần bật HTML (`enableHtml`/`--html`) |
+| `docs/21_slides_3_tracks.md` | **Slide present 3 track** (mentor giao) — Marp markdown tiếng Việt + 3 hình kiến trúc SVG inline; render cần bật HTML (`enableHtml`/`--html`) — bản v1 ngắn |
+| `docs/22_slides_v2_paper_style.md` | **Slide v2 paper-style (~36 slide)** — bản đầy đủ: bài toán + cách chấm (SRCC/CAT-ERR ví dụ tính tay) + bảng từng layer cả 3 track + training details + ablation + số liệu 10/6; render như 21_ → `slide/voicemos2026_slides_v2.html` |
 | `kaggle_baseline/` | Notebook + pipeline chạy baseline 3 track + demo Gradio. **Track 2 đặt tên theo experiment: `expNN_tên.{ipynb,py}`** (vd `exp04_fusion`, `exp07_fusion_qmos`); `track2_baseline`/`track2_prepare_data`/`demo_*` giữ nguyên (không phải experiment đơn) |
 | `baselines/` | Repo baseline clone: `vmc2026-baselines/` (gốc BTC), `UTMOS22/`, `emotion2vec/` |
 | `data/` | Dữ liệu thô (không commit; upload lên Kaggle) |

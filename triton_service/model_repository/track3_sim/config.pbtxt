@@ -1,0 +1,35 @@
+name: "track3_sim"
+backend: "python"
+max_batch_size: 8
+dynamic_batching {
+  max_queue_delay_microseconds: 5000
+}
+
+input [
+  {
+    name: "AUDIO_BYTES_TEST"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  },
+  {
+    name: "AUDIO_BYTES_REF"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+
+output [
+  {
+    # JSON: {"spk_sim": float, "acc_sim": float, "cosine": float}
+    name: "RESULT_JSON"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_GPU
+  }
+]

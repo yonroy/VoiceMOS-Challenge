@@ -1,0 +1,37 @@
+name: "track1_acr"
+backend: "python"
+max_batch_size: 8
+dynamic_batching {
+  max_queue_delay_microseconds: 5000
+}
+
+input [
+  {
+    name: "AUDIO_BYTES_A"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  },
+  {
+    # file B dùng cho CCR — bỏ trống nếu chỉ cần ACR
+    name: "AUDIO_BYTES_B"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+    optional: true
+  }
+]
+
+output [
+  {
+    # JSON: {"acr_a": float} hoặc {"acr_a":, "acr_b":, "ccr":}
+    name: "RESULT_JSON"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_GPU
+  }
+]

@@ -1,0 +1,39 @@
+name: "track2_emotion"
+backend: "python"
+
+# dynamic batching: Triton gom tối đa 8 request / 5ms chờ → 1 execute() call.
+# Audio biểu diễn dưới dạng TYPE_STRING (bytes thô) → shape [1] cố định bất kể độ dài,
+# nên Triton batch được mà không cần biết trước độ dài audio.
+max_batch_size: 8
+dynamic_batching {
+  max_queue_delay_microseconds: 5000
+}
+
+input [
+  {
+    name: "AUDIO_BYTES"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  },
+  {
+    name: "TARGET_EMOTION"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+    optional: true
+  }
+]
+
+output [
+  {
+    name: "RESULT_JSON"
+    data_type: TYPE_STRING
+    dims: [ 1 ]
+  }
+]
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_GPU
+  }
+]
