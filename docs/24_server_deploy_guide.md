@@ -341,4 +341,5 @@ docker compose down
 | `No .wav in samples/` | Chưa có file mẫu Locust | Xem Bước 4 |
 | Build image lâu / treo | Đang pull Triton base (~5GB) + cài torch | Chờ; kiểm tra internet server |
 | `failed to execute bake: read \|0: file already closed` (sau khi build XONG) | Bug compose "bake"; image thực ra **đã build** | `run_server.sh` đã set `COMPOSE_BAKE=false`. Nếu vẫn gặp: chạy thẳng `docker compose up` (không `--build`, dùng image đã có) |
+| `Bind for 0.0.0.0:8080 failed: port is already allocated` | Cổng 8080 đã bị service khác trên server chiếm | Gateway nay mặc định **18080** (`GATEWAY_PORT`). Test ở `localhost:18080`. Kiểm tra cổng bận: `sudo lsof -i:8080` hoặc `docker ps`. Đổi cổng khác: `GATEWAY_PORT=9090 docker compose up` |
 | CPU chấm rất chậm (~chục giây/file) | WavLM-large trên CPU | Bình thường — CPU chỉ để test đúng/sai, không đo tốc độ |

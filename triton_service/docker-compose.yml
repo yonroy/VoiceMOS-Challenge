@@ -61,7 +61,9 @@ services:
     environment:
       - TRITON_URL=triton:8000
     ports:
-      - "8080:8080"
+      # Cổng host 8080 hay bị chiếm trên server dùng chung → mặc định 18080.
+      # Đổi bằng env: GATEWAY_PORT=9090 docker compose up
+      - "${GATEWAY_PORT:-18080}:8080"
     depends_on:
       triton:
         condition: service_healthy
