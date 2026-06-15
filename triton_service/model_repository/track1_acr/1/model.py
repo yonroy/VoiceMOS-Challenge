@@ -35,6 +35,18 @@ class TritonPythonModel:
                 check=True)
         if REPO not in sys.path:
             sys.path.insert(0, REPO)
+        # urgent_mos/utils.py import `from torchcodec.decoders import AudioDecoder` ở top-level,
+        # nhưng track1 TỰ decode bằng soundfile rồi truyền waveform → AudioDecoder KHÔNG dùng.
+        # torchcodec bản khớp torch 2.4 chưa có AudioDecoder → chèn stub cho import qua.
+        try:
+            import torchcodec.decoders as _tcd
+            if not hasattr(_tcd, "AudioDecoder"):
+                class _AudioDecoderStub:  # không dùng trên đường suy luận (đã truyền waveform)
+                    def __init__(self, *a, **k):
+                        raise RuntimeError("AudioDecoder stub: track1 dùng waveform, không decode file.")
+                _tcd.AudioDecoder = _AudioDecoderStub
+        except Exception as _e:
+            pb_utils.Logger.log_warn(f"[track1_acr] không stub được torchcodec: {_e!r}")
         try:
             import importlib; importlib.import_module("urgent_mos.api.infer")
         except Exception:
