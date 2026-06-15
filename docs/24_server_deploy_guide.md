@@ -339,4 +339,5 @@ docker compose down
 | `CUDA out of memory` (GPU) | 3 model không vừa VRAM 12GB | Giảm `count` trong config.pbtxt, hoặc chạy ít model hơn |
 | `No .wav in samples/` | Chưa có file mẫu Locust | Xem Bước 4 |
 | Build image lâu / treo | Đang pull Triton base (~5GB) + cài torch | Chờ; kiểm tra internet server |
+| `failed to execute bake: read \|0: file already closed` (sau khi build XONG) | Bug compose "bake"; image thực ra **đã build** | `run_server.sh` đã set `COMPOSE_BAKE=false`. Nếu vẫn gặp: chạy thẳng `docker compose up` (không `--build`, dùng image đã có) |
 | CPU chấm rất chậm (~chục giây/file) | WavLM-large trên CPU | Bình thường — CPU chỉ để test đúng/sai, không đo tốc độ |

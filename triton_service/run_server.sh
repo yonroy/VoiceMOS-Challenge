@@ -8,6 +8,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Tắt "compose bake" (builder mới) — trên vài bản docker compose nó gãy với lỗi
+# "failed to execute bake: read |0: file already closed" sau khi build xong.
+# Dùng builder cổ điển cho ổn định.
+export COMPOSE_BAKE=false
+
 NO_GPU=0
 for arg in "$@"; do [[ "$arg" == "--no-gpu" ]] && NO_GPU=1; done
 
