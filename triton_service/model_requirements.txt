@@ -15,3 +15,8 @@ librosa>=0.10
 soundfile>=0.12
 numpy>=1.24,<2.0
 scipy>=1.10
+# Track 3 (ECAPA spk/acc) cần speechbrain.
+speechbrain>=1.0
+# Track 1 (URGENT-MOS) import torchcodec; bản mới đòi CUDA 13 (libnvrtc.so.13) -> sập trên
+# torch 2.4. Pin bản khớp torch 2.4 để dùng FFmpeg CPU (image đã cài ffmpeg).
+torchcodec==0.1.0
