@@ -282,4 +282,6 @@ with gr.Blocks(title="VMC2026 — Triton Tester (3 track)") as demo:
                    [b_tbl, b_metrics, b_tbl])
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    # Cổng UI đọc từ env (server dùng chung hay đụng cổng). Đổi: GRADIO_SERVER_PORT=7870 python app_ui.py
+    _port = int(os.environ.get("GRADIO_SERVER_PORT", "7860"))
+    demo.launch(server_name="0.0.0.0", server_port=_port)
