@@ -19,6 +19,11 @@ services:
         --metrics-port=8002
     volumes:
       - ./model_repository:/models
+      # Cache "sống dai" qua restart → tải UTMOS/WavLM/audeering 1 LẦN, lần sau dùng lại
+      # (tránh tải lại 392M + ~1.2GB mỗi lần `up`, và tránh đứt giữa chừng).
+      - hf_cache:/tmp/hf_home
+      - torch_cache:/tmp/torch_home
+      - model_cache:/tmp/models
     environment:
       - HF_TOKEN=${HF_TOKEN:-}
       - HF_HOME=/tmp/hf_home
@@ -61,3 +66,9 @@ services:
       triton:
         condition: service_healthy
     restart: unless-stopped
+
+# Named volume giữ cache model qua các lần restart (xem service triton ở trên).
+volumes:
+  hf_cache:
+  torch_cache:
+  model_cache:

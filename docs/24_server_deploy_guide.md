@@ -335,6 +335,7 @@ docker compose down
 | `track2_emotion UNAVAILABLE` | Checkpoint chưa tải / HF_TOKEN sai | Xem log Triton, `echo $HF_TOKEN` |
 | `ValueError: ... torch.load ... require torch >= v2.6 ... CVE-2025-32434` | transformers ≥4.50 cấm `torch.load` khi torch<2.6; `microsoft/wavlm-large` chỉ có `.bin` | Đã pin `transformers<4.50` trong `model_requirements.txt`; rebuild: `docker compose build --no-cache triton` rồi `bash run_server.sh --no-gpu` |
 | `No module named 'loralib'` (chỉ WARN) | Thiếu loralib → SAILER wrapper lỗi | **Bỏ qua** — tự fallback WavLM trắng rồi nạp đè trọng số fine-tune từ checkpoint (giống api_service) |
+| `PytorchStreamReader failed reading zip archive: failed finding central directory` | File checkpoint (UTMOS/WavLM...) tải **dở dang/đứt mạng** → `.pt` cụt | Cache nay đã để ở named volume (tải 1 lần). Nếu file hỏng còn kẹt trong volume: `docker compose down && docker volume rm triton_service_torch_cache triton_service_hf_cache && docker compose up` để tải lại sạch |
 | `502 Bad Gateway` từ curl | Triton chưa READY, gateway gọi sớm | Đợi thêm; `curl localhost:8000/v2/health/ready` |
 | `CUDA out of memory` (GPU) | 3 model không vừa VRAM 12GB | Giảm `count` trong config.pbtxt, hoặc chạy ít model hơn |
 | `No .wav in samples/` | Chưa có file mẫu Locust | Xem Bước 4 |
