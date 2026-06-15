@@ -5,9 +5,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # CPU test mode: chỉ nạp Track 2 trước (--model-control-mode=explicit + --load-model).
+    # Khi chạy GPU thật / nạp đủ 3 track: BỎ 2 dòng explicit/load-model (Triton mặc định nạp tất cả),
+    # hoặc thêm --load-model=track1_acr --load-model=track3_sim.
     command: >
       tritonserver
         --model-repository=/models
+        --model-control-mode=explicit
+        --load-model=track2_emotion
         --log-verbose=1
         --http-port=8000
         --grpc-port=8001
@@ -26,13 +31,15 @@ services:
     # Python backend truyền tensor qua shared memory; batch nhiều audio dễ tràn
     # /dev/shm mặc định 64MB → nâng lên để tránh lỗi "Failed to increase shm".
     shm_size: "2gb"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # CPU test mode: KHỐI GPU bên dưới đã được comment để Docker không đòi cấp GPU.
+    # Khi chạy GPU thật: bỏ comment lại 6 dòng deploy/resources/... bên dưới.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
     # Dùng python3 (chắc chắn có trong image -py3) thay vì curl (có thể thiếu).
     healthcheck:
       test: ["CMD", "python3", "-c",

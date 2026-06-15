@@ -32,6 +32,7 @@ output [
 instance_group [
   {
     count: 1
-    kind: KIND_GPU
+    # CPU test mode (GPU đang đầy). Đổi lại KIND_GPU khi chạy GPU thật.
+    kind: KIND_CPU
   }
 ]

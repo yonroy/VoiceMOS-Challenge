@@ -1,79 +1,169 @@
-# Hướng dẫn deploy Triton Service trên Linux Server
+# Hướng dẫn deploy & chạy Triton Service trên Linux Server
 
 > Server: `/home/nhandt23/project/VoiceMOS` · GPU 12GB · Ubuntu
-> Cập nhật ngày: 12/6/2026
+> Cập nhật ngày: 15/6/2026
 
 ---
 
-## Bước 0 — SSH vào server
+## 🔀 2 chế độ chạy — đọc trước khi bắt đầu
+
+| Chế độ | Khi nào dùng | Nạp model | Lệnh khởi động |
+|---|---|---|---|
+| **CPU test** | GPU đang **đầy / hết VRAM**, chỉ cần kiểm tra pipeline đúng/sai | **Chỉ Track 2** (trước) | `bash run_server.sh --no-gpu` |
+| **GPU thật** | GPU rảnh, cần đo tốc độ (Locust, dynamic batching) | **Cả 3 track** | `bash run_server.sh` |
+
+**Trạng thái repo hiện tại = CPU test (đã cấu hình sẵn 15/6):**
+- 3 file `config.pbtxt` đặt `kind: KIND_CPU`
+- `docker-compose.yml`: comment khối GPU `deploy`, command thêm `--model-control-mode=explicit --load-model=track2_emotion` (chỉ nạp Track 2)
+
+> ⚠️ **CPU test = chỉ kiểm tra ĐÚNG/SAI** (ra JSON 6 cột, điểm khớp `api_service`). **KHÔNG** lấy số tốc độ trên CPU: WavLM-large CPU rất chậm (~chục giây/file) và dynamic batching không tăng tốc như GPU. Locust / so batch 1-vs-8 (mentor yêu cầu) **phải chạy GPU thật**.
+
+👉 Nếu chỉ muốn test nhanh Track 2 bây giờ: nhảy thẳng tới **[Phần A — Chạy nhanh CPU test](#phần-a--chạy-nhanh-cpu-test-track-2)**.
+👉 Muốn chạy đầy đủ GPU 3 track + Locust: xem **[Phần B — Chạy GPU đầy đủ](#phần-b--chạy-gpu-đầy-đủ-3-track--locust)**.
+
+---
+
+# Phần A — Chạy nhanh CPU test (Track 2)
+
+> Mục tiêu: dựng pipeline Track 2 trên CPU, chấm 1 file `.wav`, xác nhận ra JSON 6 cột đúng. Đây là việc "🟠 chạy thật + curl test Track 2" còn nợ từ Phiên 24.
+
+## A1 — Lấy code mới về server
 
 ```bash
 ssh nhandt23@<địa-chỉ-ip-server>
-# Vào đúng thư mục project
 cd /home/nhandt23/project/VoiceMOS
+git pull          # kéo 4 file CPU mode vừa sửa (sau khi đã commit/push từ máy local)
+```
+
+> Lần đầu chưa có repo: xem **[Phần B / Bước 1](#bước-1--clone-code-lần-đầu)** để clone.
+
+## A2 — Đặt HuggingFace Token (để tải checkpoint Track 2)
+
+```bash
+export HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxx
+echo $HF_TOKEN     # kiểm tra đã đặt
+```
+> Token: huggingface.co → Settings → Access Tokens → New token (Read). Checkpoint `ft_emotion_full_20epoch.pt` nằm trên repo HF private.
+
+## A3 — Khởi động (CPU, chỉ Track 2)
+
+```bash
+cd triton_service
+bash run_server.sh --no-gpu
+```
+
+Lệnh này build image (lần đầu ~5–10 phút cài torch...) rồi chạy Triton + gateway. Chờ tới khi log hiện:
+
+```
+I ... Successfully loaded model 'track2_emotion'
+...
+[track2_emotion] sẵn sàng trên cpu
+INFO:     Uvicorn running on http://0.0.0.0:8080
+```
+
+> Request **đầu tiên** sẽ tải WavLM-large + UTMOS + audeering từ HF (~vài GB) → file đầu chậm hơn các file sau.
+> Trên CPU **không** thấy dòng `track1_acr` / `track3_sim` — đúng, vì chế độ này chỉ nạp Track 2.
+
+## A4 — Test Track 2 (mở terminal thứ 2)
+
+```bash
+ssh nhandt23@<ip-server>
+cd /home/nhandt23/project/VoiceMOS
+
+# 1. Gateway sống chưa?
+curl http://localhost:8080/health
+# Mong đợi: {"status":"ok","triton":"triton:8000"}
+
+# 2. Chấm 1 file (đổi đường dẫn wav cho đúng)
+curl -s -F "file=@/duong/dan/sample.wav" -F "target_emotion=happy" \
+     http://localhost:8080/track2 | python3 -m json.tool
+```
+
+Kết quả mong đợi (JSON 6 cột):
+```json
+{
+  "qmos": 3.8,
+  "cat": {"angry": 0.02, "happy": 0.85, "neutral": 0.08, "sad": 0.03, "surprised": 0.02},
+  "perceived_emotion": "happy",
+  "vad": {"valence": 4.1, "arousal": 3.9, "dominance": 3.5},
+  "emos": 4.2,
+  "target_emotion": "happy",
+  "emos_match": true
+}
+```
+> Bỏ `-F "target_emotion=..."` thì kết quả không có `emos`/`emos_match` (head EMOS cần target one-hot).
+
+## A5 — Đối chiếu tính đúng
+
+Chấm **cùng 1 file** bằng `api_service` cũ (HF Space hoặc local — cùng checkpoint `ft_emotion_full_20epoch.pt`). Điểm 6 cột phải **khớp** → pipeline Triton port đúng. Lệch nhiều → kiểm tra version checkpoint / tiền xử lý audio.
+
+## A6 — Dừng
+
+```bash
+cd /home/nhandt23/project/VoiceMOS/triton_service
+docker compose down
 ```
 
 ---
 
-## Bước 1 — Clone code (lần đầu — server CHƯA có repo)
+# Phần B — Chạy GPU đầy đủ (3 track + Locust)
+
+> Dùng khi GPU rảnh. Trước khi chạy, phải **đảo cấu hình về GPU** (xem B0), nếu không Triton vẫn chạy CPU và chỉ nạp Track 2.
+
+## B0 — Đảo cấu hình CPU → GPU
+
+```bash
+cd /home/nhandt23/project/VoiceMOS/triton_service
+
+# 1. 3 config: KIND_CPU → KIND_GPU
+sed -i 's/kind: KIND_CPU/kind: KIND_GPU/' \
+    model_repository/track2_emotion/config.pbtxt \
+    model_repository/track1_acr/config.pbtxt \
+    model_repository/track3_sim/config.pbtxt
+
+# 2. docker-compose.yml:
+#    - BỎ comment 6 dòng khối deploy/resources/.../nvidia
+#    - XÓA 2 dòng: --model-control-mode=explicit và --load-model=track2_emotion
+#      (Triton mặc định nạp TẤT CẢ model trong model_repository)
+nano docker-compose.yml
+```
+> Sửa tay `docker-compose.yml` cho chắc (2 chỗ trên đều có ghi chú `# CPU test mode:` ngay trên). Sau đó dùng `bash run_server.sh` (không `--no-gpu`).
+
+## Bước 1 — Clone code (lần đầu)
 
 ```bash
 mkdir -p /home/nhandt23/project && cd /home/nhandt23/project
-
-# Repo public:
 git clone https://github.com/yonroy/VoiceMOS-Challenge.git VoiceMOS
 cd VoiceMOS
 ```
+> **Repo PRIVATE** (hỏi mật khẩu): tạo Personal Access Token (github.com → Settings → Developer settings → Personal access tokens, scope `repo`) rồi:
+> `git clone https://<TOKEN>@github.com/yonroy/VoiceMOS-Challenge.git VoiceMOS`
+> Clone ~14MB (data/ + baselines/ không nằm trong git).
 
-> **Nếu repo PRIVATE** (git clone hỏi mật khẩu / `Authentication failed`):
-> ```bash
-> # Tạo Personal Access Token: github.com → Settings → Developer settings →
-> #   Personal access tokens → Generate (scope: repo)
-> git clone https://<TOKEN>@github.com/yonroy/VoiceMOS-Challenge.git VoiceMOS
-> ```
-> Clone về **chỉ ~14MB** (data/ và baselines/ không nằm trong git → không bị kéo về).
-
-Kiểm tra thư mục `triton_service/` đã có chưa:
+Kiểm tra:
 ```bash
 ls triton_service/
-# Phải thấy: docker-compose.yml  gateway/  loadtest/  model_repository/  run_server.sh
+# Phải thấy: docker-compose.yml  gateway/  loadtest/  model_repository/  run_server.sh  ui/
 ```
+> Lần sau cập nhật: `cd /home/nhandt23/project/VoiceMOS && git pull`
 
-> **Lần sau cập nhật code** (đã clone rồi): `cd /home/nhandt23/project/VoiceMOS && git pull`
-
----
-
-## Bước 2 — Kiểm tra môi trường server
+## Bước 2 — Kiểm tra môi trường
 
 ```bash
-# Docker đã cài chưa?
-docker --version
-# Cần: Docker version 20+ 
-
-# NVIDIA Container Toolkit đã cài chưa?
-nvidia-smi
-# Cần thấy: GPU name, VRAM, driver version
-
-# Docker có dùng GPU được không?
-docker run --rm --gpus all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi
-# Cần thấy: cùng thông tin GPU như lệnh trên
-
-# Dùng `docker compose` (v2) hay `docker-compose` (v1)?
-docker compose version || docker-compose version
-# run_server.sh dùng `docker compose` (v2). Nếu chỉ có v1, đổi lệnh thành docker-compose.
+docker --version                      # Docker 20+
+nvidia-smi                            # thấy GPU, VRAM, driver
+docker run --rm --gpus all nvidia/cuda:12.0-base-ubuntu20.04 nvidia-smi   # Docker dùng được GPU?
+docker compose version || docker-compose version    # v2 hay v1 (run_server.sh dùng v2)
 ```
 
-> **⚠️ KIỂM TRA QUAN TRỌNG — Python backend có `torch` không?** Code `model.py` cần `import torch`.
-> Image `tritonserver:24.08-py3` *thường* có sẵn torch, nhưng nên xác nhận TRƯỚC khi build full (kéo base ~vài GB nhưng nhanh hơn build + tải model rồi mới phát hiện lỗi):
+> **Kiểm tra `torch` trong Python backend** (image *thường* có sẵn):
 > ```bash
 > docker run --rm nvcr.io/nvidia/tritonserver:24.08-py3 \
 >     python3 -c "import torch; print('torch', torch.__version__, '· cuda', torch.cuda.is_available())"
 > ```
-> - **Ra `torch 2.x · cuda True`** → OK, build bình thường.
-> - **Lỗi `No module named torch`** → thêm 2 dòng vào `triton_service/model_requirements.txt`:
->   `torch` và `torchaudio` (hoặc đổi base sang tag `*-pyt-python-py3`). Báo tôi nếu gặp.
+> Lỗi `No module named torch` → thêm `torch` + `torchaudio` vào `triton_service/model_requirements.txt`.
 
-> Nếu lệnh GPU lỗi "could not select device driver" → cần cài NVIDIA Container Toolkit:
+> Lỗi `could not select device driver` → cài NVIDIA Container Toolkit:
 > ```bash
 > distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
 > curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
@@ -84,274 +174,151 @@ docker compose version || docker-compose version
 > sudo systemctl restart docker
 > ```
 
----
-
-## Bước 3 — Đặt HuggingFace Token
-
-Checkpoint Track 2 (`ft_emotion_full_20epoch.pt`) nằm trên HF repo private. Cần token để tải:
+## Bước 3 — HuggingFace Token
 
 ```bash
 export HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxx
-# Kiểm tra đã đặt chưa
 echo $HF_TOKEN
 ```
 
-> Token lấy ở: huggingface.co → Settings → Access Tokens → New token (Read).
-
----
-
 ## Bước 4 — Chuẩn bị file audio mẫu cho Locust
 
-Locust cần ít nhất 1 file `.wav` để bắn test (đọc file vào RAM rồi bắn lặp lại nhiều lần — 1 file là đủ, 5–10 file độ dài khác nhau là lý tưởng để test luôn dynamic batching).
+Locust cần ≥1 file `.wav` (5–10 file độ dài khác nhau là lý tưởng để test luôn dynamic batching).
 
-> ⚠️ **Tình huống của dự án này: file wav đang ở MÁY LOCAL của bạn, server CHƯA có.**
-> → phải **upload từ máy bạn lên server** bằng `scp` (xem 4A). Nếu data đã có sẵn trên server thì dùng 4B.
+> ⚠️ File wav đang ở **máy local**, server chưa có → upload qua `scp` (4A). Nếu server có sẵn data → 4B.
 
-### 4A — Upload file wav từ máy bạn lên server (trường hợp hiện tại)
+### 4A — Upload từ máy bạn lên server
 
-**Bước 1.** Trên server, tạo sẵn thư mục đích (chạy ở terminal đang SSH vào server):
 ```bash
+# Trên server: tạo thư mục đích
 mkdir -p /home/nhandt23/project/VoiceMOS/triton_service/loadtest/samples
 ```
-
-**Bước 2.** Mở **PowerShell NGAY TRÊN MÁY WINDOWS của bạn** (KHÔNG phải terminal SSH), chạy `scp`:
 ```powershell
-# Cú pháp: scp <file-máy-bạn> <user>@<ip-server>:<đường-dẫn-đích-trên-server>
-
-# Upload nhiều file .wav trong 1 thư mục (thay đường dẫn nguồn cho đúng máy bạn)
-scp "d:\VFS\VoiceMOS Challenge 2026\data\<thư-mục-chứa-wav>\*.wav" `
-    nhandt23@<ip-server>:/home/nhandt23/project/VoiceMOS/triton_service/loadtest/samples/
-
-# Hoặc chỉ 1 file
-scp "d:\VFS\VoiceMOS Challenge 2026\data\<...>\sample.wav" `
+# Trên PowerShell MÁY WINDOWS của bạn (KHÔNG phải SSH):
+scp "d:\VFS\VoiceMOS Challenge 2026\data\<thư-mục-wav>\*.wav" `
     nhandt23@<ip-server>:/home/nhandt23/project/VoiceMOS/triton_service/loadtest/samples/
 ```
-`scp` sẽ hỏi mật khẩu server (giống lúc SSH). Backtick `` ` `` cuối dòng là nối dòng trong PowerShell.
-
-**Bước 3.** Quay lại terminal SSH server, xác nhận đã lên:
 ```bash
+# Quay lại server, xác nhận:
 ls -lh /home/nhandt23/project/VoiceMOS/triton_service/loadtest/samples/
-# Phải thấy file .wav, dung lượng > 0
 ```
+> Dùng **VS Code Remote-SSH** thì kéo-thả file thẳng vào `samples/`, khỏi `scp`.
 
-> 💡 Nếu bạn kết nối server bằng **VS Code Remote-SSH**: có thể **kéo-thả file** trực tiếp từ Explorer máy bạn vào thư mục `samples/` trên server — không cần gõ `scp`.
-
-### 4B — Nếu data đã có sẵn TRÊN server
+### 4B — Data đã có sẵn trên server
 
 ```bash
 mkdir -p triton_service/loadtest/samples
-
-# Tìm xem file .wav nằm ở đâu trên server
 find /home/nhandt23/project/VoiceMOS -name "*.wav" 2>/dev/null | head -20
-
-# Copy đúng đường dẫn vừa tìm được (thay cho đường dẫn ví dụ bên dưới)
 cp /đường/dẫn/thật/*.wav triton_service/loadtest/samples/
-
-# Xác nhận (phải KHÔNG rỗng)
 ls -lh triton_service/loadtest/samples/
 ```
 
----
-
-## Bước 5 — Khởi động server
+## Bước 5 — Khởi động (GPU, 3 track)
 
 ```bash
 cd triton_service
-
-# Khởi động (lần đầu build image ~5-10 phút, kéo Triton base image ~vài GB)
-bash run_server.sh
+bash run_server.sh            # KHÔNG --no-gpu
 ```
 
-Terminal sẽ hiện log liên tục. Chờ đến khi thấy **cả 3 dòng** này:
-
+Chờ thấy **cả 3 dòng**:
 ```
 I ... Successfully loaded model 'track2_emotion'
 I ... Successfully loaded model 'track1_acr'
 I ... Successfully loaded model 'track3_sim'
 ```
+Và gateway: `INFO:     Uvicorn running on http://0.0.0.0:8080`
 
-Và gateway:
-```
-INFO:     Uvicorn running on http://0.0.0.0:8080
-```
+> Lần đầu 5–15 phút (tải WavLM-large + audeering + URGENT-MOS + ECAPA từ HF).
 
-> Lần đầu có thể mất **5–15 phút** vì cần tải WavLM-large + audeering + URGENT-MOS từ HuggingFace.
-
----
-
-## Bước 6 — Mở terminal mới, kiểm tra server sống
+## Bước 6 — Kiểm tra server sống (terminal 2)
 
 ```bash
-# Mở terminal thứ 2 (server vẫn chạy ở terminal 1)
-ssh nhandt23@<ip-server>
-cd /home/nhandt23/project/VoiceMOS
+ssh nhandt23@<ip-server>; cd /home/nhandt23/project/VoiceMOS
 
-# 1. Gateway còn sống không?
-curl http://localhost:8080/health
-# Kết quả mong đợi: {"status":"ok","triton":"triton:8000"}
-
-# 2. Triton trực tiếp
-curl http://localhost:8000/v2/health/ready
-# Kết quả mong đợi: (HTTP 200, body rỗng)
-
-# 3. GPU dùng bao nhiêu VRAM?
-nvidia-smi
-# Cần thấy: ~5-7 GB đã dùng (3 model nạp vào VRAM)
+curl http://localhost:8080/health          # {"status":"ok","triton":"triton:8000"}
+curl http://localhost:8000/v2/health/ready # HTTP 200, body rỗng
+nvidia-smi                                 # ~5-7 GB VRAM (3 model)
 ```
-
----
 
 ## Bước 7 — Test từng track bằng curl
 
 ```bash
-# Lấy 1 file wav để test
 WAV=triton_service/loadtest/samples/$(ls triton_service/loadtest/samples/ | head -1)
 echo "Dùng file: $WAV"
 
-# Track 2 — 6 cột cảm xúc
-curl -s -F "file=@$WAV" -F "target_emotion=happy" \
-     http://localhost:8080/track2 | python3 -m json.tool
+# Track 2 — 6 cột
+curl -s -F "file=@$WAV" -F "target_emotion=happy" http://localhost:8080/track2 | python3 -m json.tool
 
-# Kết quả mong đợi dạng:
-# {
-#   "qmos": 3.8,
-#   "cat": {"angry": 0.02, "happy": 0.85, ...},
-#   "perceived_emotion": "happy",
-#   "vad": {"valence": 4.1, "arousal": 3.9, "dominance": 3.5},
-#   "emos": 4.2,
-#   "target_emotion": "happy",
-#   "emos_match": true
-# }
-
-# Track 1 — ACR (1 file)
-curl -s -F "file_a=@$WAV" \
-     http://localhost:8080/track1 | python3 -m json.tool
-# Kết quả: {"acr_a": 3.7}
-
-# Track 1 — CCR (2 file so sánh)
-curl -s -F "file_a=@$WAV" -F "file_b=@$WAV" \
-     http://localhost:8080/track1 | python3 -m json.tool
-# Kết quả: {"acr_a": 3.7, "acr_b": 3.7, "ccr": 0.0}
+# Track 1 — ACR (1 file) / CCR (2 file)
+curl -s -F "file_a=@$WAV" http://localhost:8080/track1 | python3 -m json.tool                 # {"acr_a":3.7}
+curl -s -F "file_a=@$WAV" -F "file_b=@$WAV" http://localhost:8080/track1 | python3 -m json.tool # {"acr_a","acr_b","ccr"}
 
 # Track 3 — spk_sim + acc_sim
-curl -s -F "file_test=@$WAV" -F "file_ref=@$WAV" \
-     http://localhost:8080/track3 | python3 -m json.tool
-# Kết quả: {"spk_sim": 4.5, "acc_sim": 4.3, "cosine": 0.92}
+curl -s -F "file_test=@$WAV" -F "file_ref=@$WAV" http://localhost:8080/track3 | python3 -m json.tool
 ```
 
----
+## Bước 7B — UI Gradio (tùy chọn)
 
-## Bước 7B — Mở UI Gradio (tùy chọn, demo trực quan)
+UI là **client** kéo-thả audio → xem điểm, gọi gateway `:8080`. Chọn 1 cách:
 
-UI là **client** kéo-thả audio → xem điểm, gọi gateway `:8080`. Có **2 cách chạy**, chọn 1:
-
-### Cách 1 — Chạy UI ngay TRÊN MÁY WINDOWS của bạn (khuyến nghị)
-UI không cần GPU, chỉ cần gọi tới gateway server. Mở **PowerShell trên máy bạn**:
+**Cách 1 — chạy UI trên máy Windows (khuyến nghị):**
 ```powershell
 cd "d:\VFS\VoiceMOS Challenge 2026\triton_service\ui"
 pip install -r requirements.txt
-
-# Trỏ thẳng tới gateway trên server (thay <ip-server>)
 $env:GATEWAY_URL = "http://<ip-server>:8080"
-python app_ui.py
-# Mở http://localhost:7860 → kéo audio vào chấm
+python app_ui.py     # http://localhost:7860
 ```
-> Cần server **mở cổng 8080** cho máy bạn truy cập (cùng mạng nội bộ/VPN). Kiểm tra:
-> `curl http://<ip-server>:8080/health` từ máy bạn phải ra `{"status":"ok"}`.
+> Cần server mở cổng 8080 cho máy bạn (`curl http://<ip-server>:8080/health` từ máy bạn phải OK).
 
-### Cách 2 — Chạy UI TRÊN SERVER + SSH tunnel (khi cổng server bị chặn)
-Chạy UI trên server, "đục" 1 đường hầm về máy bạn:
+**Cách 2 — UI trên server + SSH tunnel (khi cổng bị chặn):**
 ```bash
-# Trên server (terminal mới):
 cd /home/nhandt23/project/VoiceMOS/triton_service/ui
 pip install -r requirements.txt
-GATEWAY_URL=http://localhost:8080 python app_ui.py   # UI chạy ở cổng 7860 trên server
+GATEWAY_URL=http://localhost:8080 python app_ui.py    # cổng 7860 trên server
 ```
 ```powershell
-# Trên MÁY BẠN — mở SSH tunnel đưa cổng 7860 của server về localhost:7860:
-ssh -N -L 7860:localhost:7860 nhandt23@<ip-server>
-# Rồi mở trình duyệt máy bạn: http://localhost:7860
+ssh -N -L 7860:localhost:7860 nhandt23@<ip-server>    # rồi mở http://localhost:7860
 ```
+> UI 4 tab: 🎯 Track 2 · 🔊 Track 1 · 🗣️ Track 3 · 📦 Chấm hàng loạt. Bấm **"Kiểm tra server"** trước khi chấm.
 
-> UI có **4 tab**: 🎯 Track 2 (6 cột cảm xúc) · 🔊 Track 1 (ACR/CCR) · 🗣️ Track 3 (spk/acc/cos) · 📦 Chấm hàng loạt (đo throughput). Bấm **"Kiểm tra server"** đầu trang để xác nhận 🟢 trước khi chấm.
-
----
-
-## Bước 8 — Chạy Locust loadtest
+## Bước 8 — Locust loadtest
 
 ```bash
-# Cài Locust (1 lần)
 pip install -r triton_service/loadtest/requirements.txt
+cd triton_service/loadtest && mkdir -p results
 
-cd triton_service/loadtest
-mkdir -p results
-
-# Chạy nhẹ trước — 5 người, 1 phút (kiểm tra không có lỗi)
+# Warmup 5 user, 1 phút
 locust -f locustfile.py --host http://localhost:8080 \
-       --users 5 --spawn-rate 1 --run-time 1m --headless \
-       --csv results/warmup
+       --users 5 --spawn-rate 1 --run-time 1m --headless --csv results/warmup
 cat results/warmup_stats.csv
 
-# Chạy thật — 20 người, 2 phút (đây là số mentor yêu cầu)
+# Thật 20 user, 2 phút (số mentor yêu cầu)
 locust -f locustfile.py --host http://localhost:8080 \
-       --users 20 --spawn-rate 2 --run-time 2m --headless \
-       --csv results/batch8
+       --users 20 --spawn-rate 2 --run-time 2m --headless --csv results/batch8
 ```
 
-Kết quả trông như này:
-
-```
-Type    Name          Req/s   Fail/s  Avg(ms)  p50   p95
-POST    /track2        12.3     0.0      820    750   1200
-POST    /track1         5.1     0.0      340    310    520
-POST    /track3         5.0     0.0      280    260    410
-GET     /health         2.1     0.0        5      5     10
-```
-
----
-
-## Bước 9 (tùy chọn) — So sánh dynamic batching ON vs OFF
+## Bước 9 — So dynamic batching ON vs OFF
 
 ```bash
 cd /home/nhandt23/project/VoiceMOS/triton_service
 
-# Tắt batching (max_batch_size: 1)
-sed -i 's/max_batch_size: 8/max_batch_size: 1/' \
-    model_repository/track2_emotion/config.pbtxt
+sed -i 's/max_batch_size: 8/max_batch_size: 1/' model_repository/track2_emotion/config.pbtxt
+docker compose restart triton && sleep 30
+cd loadtest && locust -f locustfile.py --host http://localhost:8080 \
+       --users 20 --spawn-rate 2 --run-time 1m --headless --csv results/batch1
 
-# Restart server
-docker compose restart triton
-sleep 30   # đợi model reload
+cd .. && sed -i 's/max_batch_size: 1/max_batch_size: 8/' model_repository/track2_emotion/config.pbtxt
+docker compose restart triton && sleep 30
+cd loadtest && locust -f locustfile.py --host http://localhost:8080 \
+       --users 20 --spawn-rate 2 --run-time 1m --headless --csv results/batch8
 
-# Chạy loadtest
-cd loadtest
-locust -f locustfile.py --host http://localhost:8080 \
-       --users 20 --spawn-rate 2 --run-time 1m --headless \
-       --csv results/batch1
-
-# Bật lại batching
-cd ..
-sed -i 's/max_batch_size: 1/max_batch_size: 8/' \
-    model_repository/track2_emotion/config.pbtxt
-docker compose restart triton
-sleep 30
-
-cd loadtest
-locust -f locustfile.py --host http://localhost:8080 \
-       --users 20 --spawn-rate 2 --run-time 1m --headless \
-       --csv results/batch8
-
-# So sánh throughput
 echo "=== batch=1 ===" && grep "track2" results/batch1_stats.csv
 echo "=== batch=8 ===" && grep "track2" results/batch8_stats.csv
 ```
 
----
-
-## Dừng server
+## Dừng
 
 ```bash
-# Dừng tất cả (Ctrl+C ở terminal 1, hoặc từ terminal khác)
 cd /home/nhandt23/project/VoiceMOS/triton_service
 docker compose down
 ```
@@ -362,9 +329,12 @@ docker compose down
 
 | Lỗi | Nguyên nhân | Cách sửa |
 |---|---|---|
-| `track2_emotion UNAVAILABLE` | Checkpoint chưa tải xong / HF_TOKEN sai | Kiểm tra log Triton, xác nhận `echo $HF_TOKEN` |
-| `502 Bad Gateway` từ curl | Triton chưa READY, gateway gọi sớm | Đợi thêm, kiểm tra `curl localhost:8000/v2/health/ready` |
-| `CUDA out of memory` | 3 model không vừa VRAM | Giảm `count: 2` → `count: 1` trong config.pbtxt |
-| `could not select device driver` | NVIDIA Container Toolkit chưa cài | Xem Bước 2 |
-| `No .wav in samples/` | Chưa có file mẫu cho Locust | Xem Bước 4 |
-| Build image lâu / treo | Đang pull Triton base image (~5GB) | Chờ, kiểm tra internet server |
+| Chạy CPU mà Triton đòi GPU / `could not select device driver` | Chưa comment khối `deploy` GPU trong compose, hoặc quên `--no-gpu` | Kiểm tra compose đã comment khối `nvidia`; chạy `bash run_server.sh --no-gpu` |
+| Chạy GPU nhưng chỉ nạp Track 2 | Còn `--load-model=track2_emotion` trong compose | Xóa 2 dòng `--model-control-mode`/`--load-model` (xem B0) |
+| Chạy GPU nhưng log "sẵn sàng trên cpu" | Config còn `KIND_CPU` | Đảo về `KIND_GPU` (xem B0) |
+| `track2_emotion UNAVAILABLE` | Checkpoint chưa tải / HF_TOKEN sai | Xem log Triton, `echo $HF_TOKEN` |
+| `502 Bad Gateway` từ curl | Triton chưa READY, gateway gọi sớm | Đợi thêm; `curl localhost:8000/v2/health/ready` |
+| `CUDA out of memory` (GPU) | 3 model không vừa VRAM 12GB | Giảm `count` trong config.pbtxt, hoặc chạy ít model hơn |
+| `No .wav in samples/` | Chưa có file mẫu Locust | Xem Bước 4 |
+| Build image lâu / treo | Đang pull Triton base (~5GB) + cài torch | Chờ; kiểm tra internet server |
+| CPU chấm rất chậm (~chục giây/file) | WavLM-large trên CPU | Bình thường — CPU chỉ để test đúng/sai, không đo tốc độ |
