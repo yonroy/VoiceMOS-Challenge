@@ -5,7 +5,10 @@
 # Pin 2.4.* cho khớp libtorch của Triton 24.08 (CUDA 12.x).
 torch==2.4.1
 torchaudio==2.4.1
-transformers>=4.40
+# Chặn TRẦN < 4.50: từ 4.50 transformers vá CVE-2025-32434 → CẤM torch.load khi torch < 2.6.
+# microsoft/wavlm-large chỉ có pytorch_model.bin (phải torch.load) → bản mới sẽ chặn nạp model.
+# Giữ torch 2.4.1 (khớp libtorch Triton 24.08) nên phải dùng transformers cũ hơn.
+transformers>=4.40,<4.50
 huggingface_hub>=0.23
 safetensors>=0.4
 librosa>=0.10
