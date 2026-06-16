@@ -1,18 +1,18 @@
 # ⚡ Quickstart server — cầm tay khi lên Triton (1 trang)
 
 > Bản tóm tắt copy-paste. Chi tiết + xử lý lỗi xem [24_server_deploy_guide.md](24_server_deploy_guide.md).
-> Thay `<ip-server>` bằng IP thật. Server: `/home/nhandt23/project/VoiceMOS` · GPU 12GB.
+> Thay `<ip-server>` bằng IP thật. Server: `/userdata/nhandt23/VoiceMos/VoiceMOS-Challenge` · GPU 12GB.
 
 ---
 
 ## 0️⃣ Lên server + CLONE code (lần đầu — server chưa có repo)
 ```bash
 ssh nhandt23@<ip-server>
-mkdir -p /home/nhandt23/project && cd /home/nhandt23/project
+mkdir -p /userdata/nhandt23/VoiceMos && cd /userdata/nhandt23/VoiceMos
 
 # Clone repo (public → chạy thẳng; private → xem ghi chú dưới)
-git clone https://github.com/yonroy/VoiceMOS-Challenge.git VoiceMOS
-cd VoiceMOS
+git clone https://github.com/yonroy/VoiceMOS-Challenge.git
+cd VoiceMOS-Challenge
 
 # Kiểm tra đã có triton_service:
 ls triton_service/    # thấy: docker-compose.yml gateway/ loadtest/ model_repository/ run_server.sh
@@ -20,9 +20,9 @@ ls triton_service/    # thấy: docker-compose.yml gateway/ loadtest/ model_repo
 > **Repo PRIVATE?** Nếu `git clone` hỏi mật khẩu / báo `Authentication failed`:
 > ```bash
 > # Cách nhanh: dùng Personal Access Token (github.com → Settings → Developer settings → PAT)
-> git clone https://<TOKEN>@github.com/yonroy/VoiceMOS-Challenge.git VoiceMOS
+> git clone https://<TOKEN>@github.com/yonroy/VoiceMOS-Challenge.git
 > ```
-> **Lần sau cập nhật code** (đã clone rồi): `cd VoiceMOS && git pull`
+> **Lần sau cập nhật code** (đã clone rồi): `cd VoiceMOS-Challenge && git pull`
 
 ## 1️⃣ Kiểm tra TRƯỚC (đừng bỏ — chặn lỗi sớm)
 ```bash
@@ -52,7 +52,7 @@ nvidia-smi                                         # VRAM dùng ~5-7GB
 
 ## 4️⃣ Test điểm — Track 2 TRƯỚC (xác nhận pipeline)
 ```bash
-cd /home/nhandt23/project/VoiceMOS
+cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge
 WAV=triton_service/loadtest/samples/$(ls triton_service/loadtest/samples/ | head -1)
 
 curl -s -F "file=@$WAV" -F "target_emotion=happy" localhost:8080/track2 | python3 -m json.tool
@@ -79,7 +79,7 @@ locust -f locustfile.py --host http://localhost:8080 \
 
 ## ⏹️ Dừng
 ```bash
-cd /home/nhandt23/project/VoiceMOS/triton_service && docker compose down
+cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service && docker compose down
 ```
 
 ---

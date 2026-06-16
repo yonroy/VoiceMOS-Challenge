@@ -1,6 +1,6 @@
 # Hướng dẫn deploy & chạy Triton Service trên Linux Server
 
-> Server: `/home/nhandt23/project/VoiceMOS` · GPU 12GB · Ubuntu
+> Server: `/userdata/nhandt23/VoiceMos/VoiceMOS-Challenge` · GPU 12GB · Ubuntu
 > Cập nhật ngày: 15/6/2026
 
 ---
@@ -31,7 +31,7 @@
 
 ```bash
 ssh nhandt23@<địa-chỉ-ip-server>
-cd /home/nhandt23/project/VoiceMOS
+cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge
 git pull          # kéo 4 file CPU mode vừa sửa (sau khi đã commit/push từ máy local)
 ```
 
@@ -68,7 +68,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8080
 
 ```bash
 ssh nhandt23@<ip-server>
-cd /home/nhandt23/project/VoiceMOS
+cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge
 
 # 1. Gateway sống chưa?
 curl http://localhost:8080/health
@@ -100,7 +100,7 @@ Chấm **cùng 1 file** bằng `api_service` cũ (HF Space hoặc local — cùn
 ## A6 — Dừng
 
 ```bash
-cd /home/nhandt23/project/VoiceMOS/triton_service
+cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service
 docker compose down
 ```
 
@@ -113,7 +113,7 @@ docker compose down
 ## B0 — Đảo cấu hình CPU → GPU
 
 ```bash
-cd /home/nhandt23/project/VoiceMOS/triton_service
+cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service
 
 # 1. 3 config: KIND_CPU → KIND_GPU
 sed -i 's/kind: KIND_CPU/kind: KIND_GPU/' \
@@ -132,12 +132,12 @@ nano docker-compose.yml
 ## Bước 1 — Clone code (lần đầu)
 
 ```bash
-mkdir -p /home/nhandt23/project && cd /home/nhandt23/project
-git clone https://github.com/yonroy/VoiceMOS-Challenge.git VoiceMOS
-cd VoiceMOS
+mkdir -p /userdata/nhandt23/VoiceMos && cd /userdata/nhandt23/VoiceMos
+git clone https://github.com/yonroy/VoiceMOS-Challenge.git
+cd VoiceMOS-Challenge
 ```
 > **Repo PRIVATE** (hỏi mật khẩu): tạo Personal Access Token (github.com → Settings → Developer settings → Personal access tokens, scope `repo`) rồi:
-> `git clone https://<TOKEN>@github.com/yonroy/VoiceMOS-Challenge.git VoiceMOS`
+> `git clone https://<TOKEN>@github.com/yonroy/VoiceMOS-Challenge.git`
 > Clone ~14MB (data/ + baselines/ không nằm trong git).
 
 Kiểm tra:
@@ -145,7 +145,7 @@ Kiểm tra:
 ls triton_service/
 # Phải thấy: docker-compose.yml  gateway/  loadtest/  model_repository/  run_server.sh  ui/
 ```
-> Lần sau cập nhật: `cd /home/nhandt23/project/VoiceMOS && git pull`
+> Lần sau cập nhật: `cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge && git pull`
 
 ## Bước 2 — Kiểm tra môi trường
 
@@ -191,16 +191,16 @@ Locust cần ≥1 file `.wav` (5–10 file độ dài khác nhau là lý tưởn
 
 ```bash
 # Trên server: tạo thư mục đích
-mkdir -p /home/nhandt23/project/VoiceMOS/triton_service/loadtest/samples
+mkdir -p /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service/loadtest/samples
 ```
 ```powershell
 # Trên PowerShell MÁY WINDOWS của bạn (KHÔNG phải SSH):
 scp "d:\VFS\VoiceMOS Challenge 2026\data\<thư-mục-wav>\*.wav" `
-    nhandt23@<ip-server>:/home/nhandt23/project/VoiceMOS/triton_service/loadtest/samples/
+    nhandt23@<ip-server>:/userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service/loadtest/samples/
 ```
 ```bash
 # Quay lại server, xác nhận:
-ls -lh /home/nhandt23/project/VoiceMOS/triton_service/loadtest/samples/
+ls -lh /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service/loadtest/samples/
 ```
 > Dùng **VS Code Remote-SSH** thì kéo-thả file thẳng vào `samples/`, khỏi `scp`.
 
@@ -208,7 +208,7 @@ ls -lh /home/nhandt23/project/VoiceMOS/triton_service/loadtest/samples/
 
 ```bash
 mkdir -p triton_service/loadtest/samples
-find /home/nhandt23/project/VoiceMOS -name "*.wav" 2>/dev/null | head -20
+find /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge -name "*.wav" 2>/dev/null | head -20
 cp /đường/dẫn/thật/*.wav triton_service/loadtest/samples/
 ls -lh triton_service/loadtest/samples/
 ```
@@ -233,7 +233,7 @@ Và gateway: `INFO:     Uvicorn running on http://0.0.0.0:8080`
 ## Bước 6 — Kiểm tra server sống (terminal 2)
 
 ```bash
-ssh nhandt23@<ip-server>; cd /home/nhandt23/project/VoiceMOS
+ssh nhandt23@<ip-server>; cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge
 
 curl http://localhost:8080/health          # {"status":"ok","triton":"triton:8000"}
 curl http://localhost:8000/v2/health/ready # HTTP 200, body rỗng
@@ -272,7 +272,7 @@ python app_ui.py     # http://localhost:7860
 
 **Cách 2 — UI trên server + SSH tunnel (khi cổng bị chặn):**
 ```bash
-cd /home/nhandt23/project/VoiceMOS/triton_service/ui
+cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service/ui
 pip install -r requirements.txt
 GATEWAY_URL=http://localhost:8080 python app_ui.py    # cổng 7860 trên server
 ```
@@ -300,7 +300,7 @@ locust -f locustfile.py --host http://localhost:8080 \
 ## Bước 9 — So dynamic batching ON vs OFF
 
 ```bash
-cd /home/nhandt23/project/VoiceMOS/triton_service
+cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service
 
 sed -i 's/max_batch_size: 8/max_batch_size: 1/' model_repository/track2_emotion/config.pbtxt
 docker compose restart triton && sleep 30
@@ -319,7 +319,7 @@ echo "=== batch=8 ===" && grep "track2" results/batch8_stats.csv
 ## Dừng
 
 ```bash
-cd /home/nhandt23/project/VoiceMOS/triton_service
+cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service
 docker compose down
 ```
 

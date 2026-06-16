@@ -35,6 +35,18 @@
 
 ---
 
+## ✅ NGÀY 16/6/2026 (Phiên 26) — FIX Track 1 trên Triton: cô lập env riêng (conda-pack)
+- [x] 🔍 **Truy lỗi gốc Track 1**: bật `HYDRA_FULL_ERROR=1` + tái hiện đúng môi trường → lộ `transformers.models.qwen3_omni_moe` thiếu (URGENT-MOS dùng Qwen3-Omni) → **xung đột cứng** với pin `transformers<4.50` của Track 2
+- [x] 🧩 **Cô lập env riêng** (user chọn): tạo `triton_service/track1_env/build_track1_env.sh` (conda-pack: torch 2.12 + transformers 5.12.1 + torchcodec có AudioDecoder → BỎ stub) + sửa `track1_acr/config.pbtxt` thêm `EXECUTION_ENV_PATH`
+- [x] 🔧 Fix chuỗi lỗi dựng env: `.venv` chồng→cài nhầm (env rỗng→`No module named numpy`) · `conda-pack: command not found` (PATH) · `CondaPackError` (`--ignore-missing-files`)
+- [x] ✅ Env đóng gói OK; gateway lên & Triton không thoát → dấu hiệu cả 3 track load
+- [ ] 🔴 **Xác nhận `curl http://localhost:18080/track1` ra `acr_a`** (request đầu chậm: Qwen3-Omni + tải ckpt URGENT-MOS lần đầu) → chốt Track 1 READY
+- [ ] 🟡 Nếu env lỗi prefix sau giải nén → thêm bước `conda-unpack`
+- [ ] 🟠 Đối chiếu điểm Track 1/2 CPU vs `api_service`
+- [ ] ⚠️ Nhớ: `track1_env.tar.gz` KHÔNG commit (gitignore) → server tự dựng bằng `build_track1_env.sh`
+
+---
+
 ## ✅ NGÀY 15/6/2026 (Phiên 25) — CHẠY THẬT Triton serving (CPU mode) trên server Linux
 - [x] ⚙️ **CPU test mode**: 3 config `KIND_CPU`, compose comment GPU + explicit load, cổng gateway **18080** (`GATEWAY_PORT`), UI cổng `GRADIO_SERVER_PORT`, cache model qua **named volume**
 - [x] 🔧 Xử lý chuỗi ~11 lỗi: transformers<4.50 (CVE) · COMPOSE_BAKE=false · `.pt` cụt→volume · port 8080/7860 đụng · speechbrain (T3) · torchcodec 0.1.0 · stub AudioDecoder (T1) · curl thiếu `@`

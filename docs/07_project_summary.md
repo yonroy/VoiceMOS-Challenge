@@ -1,6 +1,6 @@
 # 07 — Tóm tắt toàn bộ dự án
 
-> Tài liệu tổng hợp nhanh để tra cứu / gửi mentor. Cập nhật ngày: 10/6/2026.
+> Tài liệu tổng hợp nhanh để tra cứu / gửi mentor. Cập nhật ngày: 16/6/2026.
 
 > **Trạng thái leaderboard (cập nhật 10/6 — tốt nhất TỪNG CỘT):** Track 1 ACR/CCR = **0.662 / 0.411** · **Track 2 (best per-column): QMOS 0.6296 🏆(exp13) · EMOS 0.8116 🏆(exp08b) · CAT err 0.1331 🏆(exp08) · VAL 0.6605 🏆(exp08b) · ARO 0.7978 🏆(exp15 Mamba) · DOM 0.7539 🏆(exp08b)** · Track 3 SPK/ACC = **0.451 / 0.440**. → Hệ mạnh nhất 6 cột MỚI = **trộn cột QMOS←exp13 + ARO←exp15 + EMOS/CAT/VAL/DOM←exp08 (CHƯA NỘP bản trộn)**. Chi tiết: `04_experiments_log.md`, `12_system_description.md`.
 >
@@ -36,7 +36,7 @@ Cho 1 đoạn giọng cảm xúc (TTS hoặc người thật), dự đoán:
 
 **Dataset Track 2:** thu mới trên nền ESD + DailyTalk + 13 hệ thống TTS — **train 12,746 · val 2,730 · eval 2,730**. Nộp file `answer.txt` (`wav,QMOS,EMOS,CAT,VAL,ARO,DOM`). Chi tiết: `08_track2_spec.md`.
 
-## 3. Timeline (hôm nay 8/6/2026)
+## 3. Timeline (hôm nay 16/6/2026)
 
 | Mốc | Ngày | Ghi chú |
 |---|---|---|
@@ -46,7 +46,7 @@ Cho 1 đoạn giọng cảm xúc (TTS hoặc người thật), dự đoán:
 | Công bố kết quả | 31/8/2026 | |
 | Hạn nộp paper ICASSP 2027 | 16/9/2026 | nếu publish |
 
-→ Còn **~8–9 tuần** đến deadline nộp kết quả (60 ngày từ 8/6 → 7/8).
+→ Còn **~7–8 tuần** đến deadline nộp kết quả (52 ngày từ 16/6 → 7/8).
 
 ## 4. Baseline (đã clone về máy)
 ```

@@ -4,6 +4,44 @@
 
 ---
 
+## Báo cáo ngày 16/6/2026 (Phiên 26) — FIX Track 1 trên Triton: cô lập môi trường riêng (conda-pack) vì xung đột `transformers` cứng với Track 2
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** truy & sửa dứt điểm lỗi Track 1 (UNAVAILABLE từ Phiên 25). Đào ra **xung đột phiên bản cứng**, chọn hướng **cô lập env riêng cho Track 1** bằng cơ chế *per-model execution environment* của Triton. Không chạy thí nghiệm, **leaderboard không đổi** (phần serving).
+
+### 1. 🔍 Truy lỗi tầng-tầng (mỗi tầng che tầng sau)
+1. Stub `AudioDecoder` (Phiên 25) qua được `utils.py` nhưng Hydra chết `Error locating target 'urgent_mos.model.urgent_mos.UrgentMOS'`. Phải **bật `HYDRA_FULL_ERROR=1`** + **tái hiện đúng môi trường** (chạy `pip install -e` + áp stub như model.py) mới lộ lỗi thật.
+2. **Lỗi gốc thật:** `urgent_mos/model/audio_encoder.py` → `from transformers.models.qwen3_omni_moe ...` → `ModuleNotFoundError`. URGENT-MOS dùng **Qwen3-Omni-MoE** làm audio encoder → cần **`transformers` đời mới (~4.57+)**, **XUNG ĐỘT** với pin `transformers<4.50` của Track 2 (WavLM `.bin` + CVE). Một image không thỏa được cả hai → stub chỉ là vỏ ngoài, gốc sâu hơn.
+
+### 2. 🧩 Quyết định: cô lập env riêng cho Track 1 (user chọn)
+- Dùng **`EXECUTION_ENV_PATH` + `conda-pack`**: Track 1 chạy bằng Python của 1 conda env đóng gói riêng (torch **2.12+cu130**, **transformers 5.12.1**, **torchcodec có `AudioDecoder` thật → BỎ stub**), Track 2/3 giữ nguyên image cũ. Chính việc ép URGENT-MOS vào torch 2.4 mới sinh toàn bộ mớ lỗi torchcodec trước đó.
+- **Tạo mới:** `triton_service/track1_env/build_track1_env.sh` (conda env py3.10 + ffmpeg + `pip install URGENT-MOS` → `conda-pack` → `model_repository/track1_acr/track1_env.tar.gz`). **Sửa** `track1_acr/config.pbtxt` thêm khối `parameters { EXECUTION_ENV_PATH }`.
+- ⚠️ `track1_env.tar.gz` **KHÔNG commit** (gitignore `*.tar.gz`) → server phải **tự dựng** bằng script.
+
+### 3. 🔧 Chuỗi lỗi khi DỰNG ENV (fix dần)
+1. **`.venv` chồng lên conda** → `pip` cài vào `.venv` chứ không vào `track1env` → `conda-pack` ra **env rỗng** → Triton báo `No module named 'numpy'`. Verify lúc build "OK giả" vì chạy bằng python của `.venv`. **Fix:** `deactivate` mọi env chồng + dùng `$CONDA_PREFIX/bin/python` tuyệt đối + assert đúng env + verify bằng python của env (in `numpy.__file__`).
+2. **`conda-pack: command not found`** (base/bin không trên PATH khi active track1env) → tarball không tạo → Triton `Failed to get the canonical path`. **Fix:** gọi `$BASE/bin/conda-pack` tuyệt đối + assert file tồn tại.
+3. **`CondaPackError`** do `pip -U` ghi đè metadata `pip/setuptools` của conda → thêm cờ **`--ignore-missing-files`**.
+
+### 4. ✅ Kết quả
+- Env đóng gói thành công (verify in `>> ENV OK: transformers 5.12.1 | torch 2.12.0+cu130 | AudioDecoder ...`). Triton restart → **gateway lên & container Triton KHÔNG thoát** → dấu hiệu cả 3 model đã load (chế độ explicit, 1 model fail là sập cả). **Đang chờ xác nhận cuối**: `curl /track1` ra `acr_a` (request đầu chậm vì Qwen3-Omni nặng trên CPU + tải ckpt URGENT-MOS lần đầu).
+- Track 2 + Track 3 vẫn READY suốt.
+
+### 5. 🧠 Buổi học (người mới)
+- `docker build` **ghi đè theo TÊN** (bản cũ mất tag → image `<none>` dangling, vẫn chiếm đĩa); `docker image prune` an toàn (chỉ xóa dangling, có hỏi) — **tránh `-a`** (xóa cả image có tên không có container đang chạy). Sửa `model.py`/config (mount volume) **không cần build lại**, chỉ restart.
+- Hydra giấu lỗi import → cần `HYDRA_FULL_ERROR=1`; diagnostic phải **giống hệt môi trường thật** mới đúng bệnh.
+- Xung đột dependency giữa 2 model trong 1 server → **cô lập env** (conda-pack) là cách sạch; conda-pack cần env đúng + đường dẫn tuyệt đối + `--ignore-missing-files`.
+
+### 6. Việc tiếp theo
+- 🔴 **Xác nhận `curl /track1` ra `acr_a`** → chốt Track 1 READY (khép chuỗi lỗi torchcodec/transformers).
+- 🟡 Nếu env sai prefix sau giải nён → thêm bước **`conda-unpack`** (giải nén sẵn + trỏ `EXECUTION_ENV_PATH` vào thư mục).
+- 🟠 Đối chiếu điểm Track 1/2 CPU vs `api_service`; khi GPU rảnh → đảo GPU (B0) + Locust + so batch 1 vs 8.
+- 🔒 (vẫn nợ) revoke token HF lộ; ablation ranking exp13; nộp bản trộn cột mới.
+
+### Đã commit (origin/main)
+`25543d5` env+config Track1 · `d5fcc64` chống nhầm `.venv`/base · `21a7be0` conda-pack đường dẫn tuyệt đối · `b5133a9` `--ignore-missing-files`.
+
+---
+
 ## Báo cáo ngày 15/6/2026 (Phiên 25) — CHẠY THẬT Triton serving lần đầu (CPU mode) trên server Linux + đưa được 2/3 → 3/3 track lên + viết lại guide deploy
 
 **Người thực hiện:** Tran Minh Toan · **Nội dung:** GPU server đang đầy → dựng chế độ **CPU test** cho `triton_service/` và chạy thật end-to-end. Đây là lần đầu hệ Triton (dựng ở Phiên 24, mới pass syntax) **hoạt động thật**. Không chạy thí nghiệm, leaderboard không đổi.
