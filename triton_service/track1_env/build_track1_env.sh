@@ -71,7 +71,8 @@ echo "==> 6/6  Đóng gói env -> $OUT"
 BASE="$(conda info --base)"
 "$BASE/bin/python" -m pip install -q conda-pack
 rm -f "$OUT"
-"$BASE/bin/conda-pack" -n "$ENV_NAME" -o "$OUT" --force
+# --ignore-missing-files: bỏ qua cảnh báo pip/setuptools bị `pip -U` ghi đè (chỉ metadata, vô hại).
+"$BASE/bin/conda-pack" -n "$ENV_NAME" -o "$OUT" --force --ignore-missing-files
 [[ -f "$OUT" ]] || { echo "❌ Không tạo được $OUT"; exit 1; }
 
 echo ""
