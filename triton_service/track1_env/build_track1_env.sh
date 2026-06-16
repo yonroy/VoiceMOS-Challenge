@@ -66,10 +66,13 @@ print(">> ENV OK: transformers", __import__("transformers").__version__,
 PY
 
 echo "==> 6/6  Đóng gói env -> $OUT"
-# conda-pack cài vào BASE (công cụ đóng gói), gọi lệnh standalone `conda-pack` cho chắc.
-"$(conda info --base)/bin/python" -m pip install -q conda-pack
+# conda-pack cài vào BASE; gọi bằng ĐƯỜNG DẪN TUYỆT ĐỐI vì base/bin không nằm trên PATH
+# khi đang active track1env (nếu gõ trần `conda-pack` sẽ 'command not found').
+BASE="$(conda info --base)"
+"$BASE/bin/python" -m pip install -q conda-pack
 rm -f "$OUT"
-conda-pack -n "$ENV_NAME" -o "$OUT" --force
+"$BASE/bin/conda-pack" -n "$ENV_NAME" -o "$OUT" --force
+[[ -f "$OUT" ]] || { echo "❌ Không tạo được $OUT"; exit 1; }
 
 echo ""
 echo "✅ XONG. File env: $OUT"
