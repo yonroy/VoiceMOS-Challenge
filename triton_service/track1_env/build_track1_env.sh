@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# Dựng MÔI TRƯỜNG RIÊNG cho Track 1 (URGENT-MOS) rồi đóng gói (conda-pack) thành
+# track1_env.tar.gz để Triton Python backend nạp RIÊNG cho model track1_acr
+# (qua tham số EXECUTION_ENV_PATH trong config.pbtxt).
+#
+# VÌ SAO: URGENT-MOS dùng Qwen3-Omni-MoE → cần `transformers` đời mới + torch 2.7 +
+# torchcodec≥0.4 (có AudioDecoder thật). Stack này XUNG ĐỘT với image chung của
+# Track 2 (pin transformers<4.50 + torch 2.4 cho WavLM). Cô lập env là cách sạch nhất:
+# Track 1 cài đúng đồ của nó, Track 2/3 giữ nguyên image, không đụng nhau.
+#
+# CHẠY TRÊN SERVER (dùng conda `base` có sẵn — dấu nhắc đang là `(base)`):
+#   cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service/track1_env
+#   bash build_track1_env.sh
+#
+# Sản phẩm: ../model_repository/track1_acr/track1_env.tar.gz  (~1.5–2.5GB, .gitignore bỏ qua)
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+ENV_NAME="${ENV_NAME:-track1env}"
+PY_VER="3.10"   # PHẢI khớp Python của Triton 24.08 (3.10) để dùng chung python_backend_stub
+HERE="$(cd "$(dirname "$0")" && pwd)"
+OUT="$HERE/../model_repository/track1_acr/track1_env.tar.gz"
+URGENT_REPO="${URGENT_REPO:-/tmp/URGENT-MOS-build}"
+
+echo "==> 1/6  Tạo conda env '$ENV_NAME' (python $PY_VER)"
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda create -y -n "$ENV_NAME" "python=$PY_VER"
+conda activate "$ENV_NAME"
+
+echo "==> 2/6  Cài ffmpeg (torchcodec cần lib FFmpeg để import được)"
+conda install -y -c conda-forge "ffmpeg<7"
+
+python -m pip install -U pip
+
+echo "==> 3/6  Lấy source URGENT-MOS"
+rm -rf "$URGENT_REPO"
+git clone -q https://github.com/vvwangvv/URGENT-MOS.git "$URGENT_REPO"
+
+echo "==> 4/6  Cài URGENT-MOS + toàn bộ stack gốc của nó (torch2.7/torchcodec/transformers Qwen3-Omni...)"
+# Cài non-editable → urgent_mos + deps NẰM HẲN trong env (đi theo conda-pack, không phụ thuộc path build).
+python -m pip install "$URGENT_REPO"
+
+echo "==> 5/6  KIỂM TRA import trước khi đóng gói (đỡ pack ra rồi mới biết hỏng)"
+python - <<'PY'
+import transformers.models.qwen3_omni_moe          # class Track1 cần
+from torchcodec.decoders import AudioDecoder        # phải là class THẬT (không stub)
+import urgent_mos.model.urgent_mos                   # module từng làm Triton chết
+print(">> ENV OK: transformers", __import__("transformers").__version__,
+      "| torch", __import__("torch").__version__,
+      "| AudioDecoder", AudioDecoder)
+PY
+
+echo "==> 6/6  Đóng gói env -> $OUT"
+python -m pip install -q conda-pack
+rm -f "$OUT"
+conda pack -n "$ENV_NAME" -o "$OUT"
+
+echo ""
+echo "✅ XONG. File env: $OUT"
+ls -lh "$OUT"
+echo "→ Bước tiếp: config.pbtxt của track1_acr đã trỏ EXECUTION_ENV_PATH vào file này."
+echo "  Khởi động lại: cd ..; cd ..; bash run_server.sh --no-gpu"

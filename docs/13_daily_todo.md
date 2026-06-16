@@ -35,6 +35,19 @@
 
 ---
 
+## ✅ NGÀY 15/6/2026 (Phiên 25) — CHẠY THẬT Triton serving (CPU mode) trên server Linux
+- [x] ⚙️ **CPU test mode**: 3 config `KIND_CPU`, compose comment GPU + explicit load, cổng gateway **18080** (`GATEWAY_PORT`), UI cổng `GRADIO_SERVER_PORT`, cache model qua **named volume**
+- [x] 🔧 Xử lý chuỗi ~11 lỗi: transformers<4.50 (CVE) · COMPOSE_BAKE=false · `.pt` cụt→volume · port 8080/7860 đụng · speechbrain (T3) · torchcodec 0.1.0 · stub AudioDecoder (T1) · curl thiếu `@`
+- [x] ✅ **Track 2 READY** + **Track 3 READY** trên CPU; `curl /track2` trả JSON 6 cột đúng
+- [x] 📚 Viết lại `docs/24_server_deploy_guide.md` (Phần A CPU / Phần B GPU + B0 đảo cấu hình + bảng lỗi)
+- [x] 🧠 Buổi học: image vs container · build vs up · workers (client) ≠ batch (server) · vì sao CPU không lợi batching
+- [ ] 🔴 **Xác nhận Track 1 READY** sau stub AudioDecoder (chờ log restart)
+- [ ] 🟠 Đối chiếu điểm CPU vs `api_service` (cùng ckpt → phải khớp)
+- [ ] 🟠 Khi GPU rảnh: đảo về GPU (B0) → Locust + so batch 1 vs 8 (số thật cho slide/paper)
+- [ ] 🟡 Giải quyết triệt để torchcodec T1 (nâng torch 2.7 python-backend hay giữ stub)
+
+---
+
 ## ✅ NGÀY 12/6/2026 (Phiên 24) — Triton serving 3 track + gateway API + dynamic batching thật + Locust + UI 3 track
 - [x] 🏗️ **Dựng trọn `triton_service/` cho 3 track** (theo mentor: server Linux 1×GPU 12GB): 3 model Triton `model_repository/{track2_emotion,track1_acr,track3_sim}` (port từ exp08 / URGENT-MOS / ECAPA); xóa `kaggle/` (bỏ PyTriton)
 - [x] ⚡ **Dynamic batching thật**: `config.pbtxt` `max_batch_size:8` + `dynamic_batching{}`; `execute()` Track2 pad + attention_mask → 1 WavLM forward gộp; Track3 pad cặp; Track1 `infer(list)`

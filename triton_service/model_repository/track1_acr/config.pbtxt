@@ -5,6 +5,17 @@ dynamic_batching {
   max_queue_delay_microseconds: 5000
 }
 
+# MÔI TRƯỜNG RIÊNG cho Track 1 (cô lập khỏi image chung của Track 2/3).
+# URGENT-MOS cần transformers mới (Qwen3-Omni) + torch 2.7 + torchcodec≥0.4 — xung đột
+# với pin transformers<4.50/torch 2.4 của Track 2. Env này do track1_env/build_track1_env.sh
+# dựng (conda-pack) và đặt cạnh config này. Triton Python backend sẽ chạy track1_acr bằng
+# Python của env này, KHÔNG dùng Python mặc định của image.
+# Nếu CHƯA dựng env (chưa có file .tar.gz) → comment khối parameters này để Track 1 không nạp.
+parameters: {
+  key: "EXECUTION_ENV_PATH"
+  value: { string_value: "$$TRITON_MODEL_DIRECTORY/track1_env.tar.gz" }
+}
+
 input [
   {
     name: "AUDIO_BYTES_A"

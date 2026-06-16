@@ -4,6 +4,46 @@
 
 ---
 
+## Báo cáo ngày 15/6/2026 (Phiên 25) — CHẠY THẬT Triton serving lần đầu (CPU mode) trên server Linux + đưa được 2/3 → 3/3 track lên + viết lại guide deploy
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** GPU server đang đầy → dựng chế độ **CPU test** cho `triton_service/` và chạy thật end-to-end. Đây là lần đầu hệ Triton (dựng ở Phiên 24, mới pass syntax) **hoạt động thật**. Không chạy thí nghiệm, leaderboard không đổi.
+
+### 1. ⚙️ CPU test mode (cấu hình + cách đảo lại GPU)
+- 3 `config.pbtxt`: `KIND_GPU → KIND_CPU`; `docker-compose.yml`: comment khối GPU `deploy`, command thêm `--model-control-mode=explicit --load-model=...` (đầu chỉ Track 2, sau nạp đủ 3). Model code đã CPU-safe sẵn (`torch.cuda.is_available()`).
+- Cổng gateway 8080 (server dùng chung đã chiếm) → đổi mặc định **18080** (`GATEWAY_PORT`). UI cổng đọc từ `GRADIO_SERVER_PORT`.
+- Cache model để **named volume** (hf/torch/model) → tải UTMOS/WavLM/audeering 1 lần, restart không tải lại.
+
+### 2. 🔧 Chuỗi ~11 lỗi đã xử lý (theo thứ tự gặp)
+1. **transformers ≥4.50 cấm `torch.load`** (CVE-2025-32434, cần torch≥2.6) mà `microsoft/wavlm-large` chỉ có `.bin` → pin `transformers<4.50` (giữ torch 2.4.1 khớp libtorch Triton 24.08).
+2. **`failed to execute bake`** (bug compose) sau khi build xong → `COMPOSE_BAKE=false` trong `run_server.sh`.
+3. **`.pt` cụt do đứt mạng** (`PytorchStreamReader ... central directory`) → named volume + tải lại sạch.
+4. **Port 8080 đã chiếm** → gateway 18080.
+5. **Gradio 7860 đã chiếm** + code hard-code port → đọc `GRADIO_SERVER_PORT`.
+6. **Track 3** `No module named speechbrain` → thêm `speechbrain` vào `model_requirements.txt` → **READY**.
+7. **Track 1** torchcodec mới đòi `libnvrtc.so.13` (CUDA 13) → pin `torchcodec==0.1.0` (khớp torch 2.4).
+8. **Track 1** torchcodec 0.1.0 lại **thiếu `AudioDecoder`** (urgent_mos import top-level) — kẹt version thật (AudioDecoder cần torchcodec≥0.4 → torch≥2.7). Vì track1 **tự decode bằng soundfile + truyền waveform** (không dùng decoder) → **chèn stub `AudioDecoder`** vào torchcodec trước khi import urgent_mos (chỉ restart, không build lại vì model.py mount volume).
+9. (vận hành) `curl` thiếu `@` trước path → gửi chuỗi thay vì file.
+
+### 3. ✅ Kết quả
+- **Track 2 READY** trên CPU, `curl /track2` trả JSON 6 cột đúng. **Track 3 READY** (sau fix speechbrain). **Track 1** vừa vá stub (chờ log xác nhận READY).
+- UI Gradio gọi gateway 18080, ≥2/3 tab chạy. Đo thử batch trên CPU: 100 file/workers=16 → 0.47 audio/s, latency ~31s (CHỈ chứng minh đúng, **không phải số hiệu năng** — batching chỉ lợi trên GPU).
+- Bài học: workers (client, song song) ≠ batch (server, max_batch_size=8); workers phải ≥8 mới nuôi đầy batch.
+
+### 4. 📚 Tài liệu
+- Viết lại `docs/24_server_deploy_guide.md`: **Phần A** (CPU test Track 2) + **Phần B** (GPU đầy đủ + B0 đảo cấu hình) + bảng lỗi mở rộng (đủ các lỗi gặp trong phiên).
+
+### 5. Việc tiếp theo
+- 🔴 **Xác nhận Track 1 READY** sau stub; nếu `infer` còn chạm AudioDecoder thì patch sâu hơn.
+- 🟠 **Đối chiếu điểm CPU vs `api_service`** (cùng ckpt phải khớp) → chứng minh port Triton đúng.
+- 🟠 Khi **GPU rảnh**: đảo về GPU (B0), chạy **Locust** lấy số throughput + so batch 1 vs 8 thật (mentor yêu cầu) → số cho slide/paper.
+- 🟡 Giải quyết triệt để torchcodec Track 1 (nâng torch 2.7 cho python backend? hay giữ stub).
+- 🔒 (vẫn nợ) revoke token HF lộ; ablation ranking exp13; nộp bản trộn cột mới.
+
+### Đã commit (origin/main)
+`5f76065` CPU mode + guide · `b1ec65a` transformers<4.50 · `86030ca` COMPOSE_BAKE · `c17a7c4` named volume · `b449a2a` port 18080 · `0d00cca` UI port · `ed5240c` nạp 3 track · `684b30b` speechbrain+torchcodec · `2da27df` stub AudioDecoder.
+
+---
+
 ## Báo cáo ngày 12/6/2026 (Phiên 24) — hoàn thiện Triton serving cho CẢ 3 TRACK (theo mentor) + gateway API + dynamic batching thật + Locust loadtest + UI 3 track + 2 tài liệu hướng dẫn
 
 **Người thực hiện:** Tran Minh Toan · **Nội dung:** dựng trọn `triton_service/` theo đúng yêu cầu mentor (server Linux 1×GPU 12GB nội bộ): Triton serving 3 track, API "upload audio → trả score", xử lý dynamic batching cho audio khác độ dài, loadtest Locust. Không chạy thí nghiệm/đổi leaderboard — đây là phần **triển khai serving**.
