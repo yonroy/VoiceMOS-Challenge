@@ -35,6 +35,65 @@
 
 ---
 
+## ✅ NGÀY 22/6/2026 (Phiên 32) — Rà soát bảo mật source (không để lộ secret/link nội bộ/data/API)
+- [x] 🔍 Quét toàn source: **không có API key/token thật hardcode** (đều placeholder / `os.environ` / textbox password); CodaBench `secret_key` không lộ; `.gitignore` đã chặn `.env`/`*.key`/`data`/`cache`/`*.pt`
+- [x] 🔧 Scrub username nội bộ **`nhandt23` → `<user>`** trong `docs/24`, `docs/25`, `triton_service/README.md`, `build_track1_env.sh` (+ `docs/11`, `docs/13`)
+- [x] 📝 `.env.example`: thêm `OPENAI_API_KEY` + `HF_TOKEN`
+- [x] ✅ Commit `12efdc0` (5 file scrub thuần)
+- [ ] 🟠 (user quyết) `git filter-repo` xoá `nhandt23` khỏi **lịch sử git** nếu muốn xoá triệt để
+- [ ] 🔴 (user) **Revoke token HF từng lộ** (Phiên 19) nếu chưa làm
+
+---
+
+## ✅ NGÀY 19/6/2026 (Phiên 30) — Hoàn thiện slide present (deck HTML) + nhận xét baseline
+- [x] **Gộp Track 2** trong `voicemos2026_v2.html`: C2 Fusion + C3 Fine-tune → 1 pipeline hợp nhất (overview `t2over` + stepper `c2arch` 6 panel + bảng `t2layer`; xóa `c3over/c3arch/c3layer`; sửa JS stepper; đánh lại số trang `/27`)
+- [x] **Đổi font** Inter+Playfair → **Be Vietnam Pro** (giữ JetBrains Mono); sửa `@import` + mọi `font-family`
+- [x] **Bỏ gần hết công thức toán** (giữ duy nhất ô SRCC ví dụ tính tay)
+- [x] Bản `voicemos2026_v2 copy 2.html`: thêm **hình SVG Triton service** (slide deploy); sửa **slide 8 (`t1prob`) + 13 (`t3prob`)** tách ý ①② + sửa lỗi `<ul>` chưa đóng
+- [x] **Nhận xét pipeline Track 1 & Track 3** (Track 1 nghẽn CCR do thiếu train; Track 3 đáng nâng cấp nhất vì có train data + đang zero-shot)
+- [ ] (đề xuất) **Nâng cấp Track 3**: interaction-MLP `g=[eₐ;e_b;|eₐ−e_b|;eₐ⊙e_b]` → 2 head spk/acc riêng, train 2.800 mẫu → kỳ vọng vượt 0.45/0.44
+- [ ] (tùy chọn) dọn file rác: `voicemos2026_v2.html.bak`, `voicemos2026_v2 copy.html`
+
+---
+
+## ✅ NGÀY 18/6/2026 (Phiên 29) — Thêm AUDIO-LLM (Qwen2-Audio) vào fusion Track 2 + giải thích kiến trúc Track 1
+- [x] 📖 Giải thích kiến trúc **Track 1 (URGENT-MOS)**: 4 encoder ❄ (CNN×7→Transformer×24→trộn lớp→mean-pool→fusion→AMPM/NCPM) ra ACR/CCR
+- [x] 🆕 **Code + chạy + NỘP exp20** (cross-attn exp18 + Qwen2-Audio pooled, chuẩn hoá+chiếu 256): DEV EMOS 0.8032·VAD 0.640/0.794/0.750 → **khỏe nhưng không vượt best** (audio-LLM dư thừa)
+- [x] 💀 **Code + chạy + NỘP exp21** (mean-pool concat thô 3 encoder): DEV **SẬP** (EMOS 0.4959, VAD=0) do LLM outlier nối thô → trunk chết; val nội bộ ẢO 0.82
+- [x] 🔧 Bài học: thêm đặc trưng LLM **bắt buộc chuẩn hoá per-dim + giảm chiều**; `val_score` bỏ nan; Qwen2-Audio chạy T4 nhờ 4-bit
+- [x] 🧩 4 file `.py`+`.ipynb` (exp20/exp21), jupytext convert, py_compile OK
+- [ ] 🟢 (tùy chọn) cho audio-LLM **chỉ nuôi VAD head** (nhích ARO/DOM) — lợi nhỏ
+- [ ] 🔴 Vẫn nợ từ Phiên 28: **chạy exp19** + nộp **bản trộn cột mới** (EMOS←exp18 + QMOS←exp13 + ARO←exp15)
+- [ ] 🟢 Ưu tiên **novelty thật** (EMOS-as-similarity) hơn là thêm encoder
+
+---
+
+## ✅ NGÀY 17/6/2026 (Phiên 28) — Cải tiến exp18 (Mamba/ranking) + code exp19 + định hướng paper
+- [x] 🧪 Thêm rồi GỠ **Mamba** vào exp18 (cờ `USE_MAMBA`): nộp DEV → **ablation âm** (EMOS hoà 0.8144, VAD lẫn nhiễu) → gỡ, trả exp18 về bản gốc
+- [x] 🎯 Thêm **ranking loss** (`LAMBDA_RANK`, `pairwise_rank_loss` toàn-bộ-cặp) vào exp18; nộp **λ=0.3**: EMOS 0.8079·VAL 0.6426·ARO 0.7947·**DOM 0.7522** (VAD nhích, EMOS tụt nhẹ; chưa vượt best)
+- [x] 🏗️ **Code mới exp19** (fine-tune WavLM top-6 LIVE + cross-attn + audeering cache + ranking + lưu backbone): `.py`+`.ipynb`, py_compile OK, fix GradScaler flush
+- [x] 📄 Bàn hướng paper ("chỉ là fusion") → đề xuất novelty: Hướng A EMOS-as-similarity / B text cho VAL / C efficiency
+- [x] 🖥️ Rà cách bật **GPU Triton** (B0 + cổng 18080) — `docs/24`
+- [ ] 🟠 (tuỳ chọn) chạy exp18 **λ=0.7** → so DOM/VAL với best
+- [ ] 🔴 **Smoke test + chạy exp19** (kỳ vọng phá kỷ lục VAD/EMOS; cẩn thận overfit)
+- [ ] 🟢 Lên kế hoạch chi tiết **Hướng A (EMOS-as-similarity)** cho novelty paper
+- [ ] 🟠 Cập nhật bảng kết quả `19_` + nộp **bản trộn cột mới** (EMOS←exp18 + QMOS←exp13 + ARO←exp15 + VAL/DOM←exp08b)
+
+---
+
+## ✅ NGÀY 16/6/2026 (Phiên 27) — exp18 Cross-Attention Fusion + test Triton 3 track/UI
+- [x] 🧪 **Viết + chạy exp18** (cross-attention WavLM-SAILER ⟷ audeering, frozen + cache frame-level, chỉ train fusion+heads): plan duyệt → `exp18_crossattn_emotion_pipeline.py` + `.ipynb` (py_compile OK)
+- [x] 🐛 Fix bug thiếu `loralib` → SAILER fallback "WavLM trắng" → thêm `loralib`+`speechbrain`
+- [x] 📊 **NỘP DEV: EMOS 0.8144 🏆 kỷ lục cột** (vượt exp08b 0.8116); CAT 0.1351 · VAL 0.6403 · ARO 0.7917 · DOM 0.7426 (các cột này KHÔNG vượt best)
+- [x] 📄 Tạo `docs/25_track2_architecture.md` (kiến trúc Track 2 cho người mới)
+- [x] 🖥️ Viết runbook test Triton 3 track + UI (CPU); fix cổng UI 7860→7880 → UI lên
+- [ ] 🔴 **Sửa nốt Track 1** trên Triton (curl `/track1` ra `acr_a`) — mai tiếp
+- [ ] 🟠 exp18 ablation (cache giữ nguyên): `XATTN_DIR=bi/aud_q` · `N_LAYERS=2` · `USE_VAD3` on/off → cứu VAL/DOM + bảng paper
+- [ ] 🟠 Ghép + nộp **bản trộn cột mới**: EMOS←exp18 + QMOS←exp13 + ARO←exp15 + CAT/VAL/DOM←exp08
+- [ ] 🟡 Cập nhật paper `19_` (bảng kết quả + đóng góp C5 với exp18)
+
+---
+
 ## ✅ NGÀY 16/6/2026 (Phiên 26) — FIX Track 1 trên Triton: cô lập env riêng (conda-pack)
 - [x] 🔍 **Truy lỗi gốc Track 1**: bật `HYDRA_FULL_ERROR=1` + tái hiện đúng môi trường → lộ `transformers.models.qwen3_omni_moe` thiếu (URGENT-MOS dùng Qwen3-Omni) → **xung đột cứng** với pin `transformers<4.50` của Track 2
 - [x] 🧩 **Cô lập env riêng** (user chọn): tạo `triton_service/track1_env/build_track1_env.sh` (conda-pack: torch 2.12 + transformers 5.12.1 + torchcodec có AudioDecoder → BỎ stub) + sửa `track1_acr/config.pbtxt` thêm `EXECUTION_ENV_PATH`
@@ -68,7 +127,7 @@
 - [x] 🐳 **docker-compose.yml + run_server.sh** (triton+gateway, GPU, healthcheck); giữ run_local.ps1
 - [x] 🖥️ **Viết lại UI** `ui/app_ui.py` 4 tab (3 track + batch throughput), gọi gateway :8080 bằng `requests` (bỏ tritonclient)
 - [x] 📚 **2 tài liệu**: `docs/23_triton_system_overview.md` (nắm hệ thống) + `docs/24_server_deploy_guide.md` (9 bước chạy thật + scp upload wav + xử lý lỗi)
-- [ ] 🟠 **Chạy thật trên server** `/home/nhandt23/project/VoiceMOS`: build image, `bash run_server.sh`, curl test 3 track, đối chiếu điểm T2 với api_service (cùng ckpt phải khớp)
+- [ ] 🟠 **Chạy thật trên server** `/home/<user>/project/VoiceMOS`: build image, `bash run_server.sh`, curl test 3 track, đối chiếu điểm T2 với api_service (cùng ckpt phải khớp)
 - [ ] 🟠 **Locust**: upload wav mẫu, ramp 20 user, ghi RPS/p95; so `max_batch_size 1 vs 8`
 - [ ] 🟢 Verify VRAM 3 model < 12GB (`nvidia-smi`)
 

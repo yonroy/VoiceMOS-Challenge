@@ -95,7 +95,9 @@ VoiceMOS Challenge 2026/
 - Endpoint: `POST /track1` (ACR+CCR) · `POST /track2` (QMOS+EMOS+CAT+VAD) · `POST /track3` (spk+acc) · `GET /health`
 - Gọi hàng loạt từ Kaggle: [kaggle_baseline/demo_api_client_kaggle.ipynb](kaggle_baseline/demo_api_client_kaggle.ipynb)
 
-**📦 Checkpoint & code (HF Models):** `tranminhtoan140601/voicemos2026-track2-emotion` (checkpoint) · `…/voicemos2026-code` (pipeline).
+**📦 Checkpoint & code (HF Models):**
+- Checkpoint Track 2 (cảm xúc): https://huggingface.co/tranminhtoan140601/voicemos2026-track2-emotion
+- Code/pipeline: https://huggingface.co/tranminhtoan140601/voicemos2026-code
 
 **🎞️ Slide thuyết trình 3 track (mentor giao):**
 - **v2 paper-style (~36 slide, khuyên dùng):** HTML [slide/voicemos2026_slides_v2.html](slide/voicemos2026_slides_v2.html) · nguồn [docs/22_slides_v2_paper_style.md](docs/22_slides_v2_paper_style.md) — thêm cách chấm (SRCC/CAT-ERR ví dụ tính tay), bảng từng layer cả 3 track, training details, ablation, số liệu 10/6 (QMOS 0.6296 · ARO 0.7978).

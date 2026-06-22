@@ -29,6 +29,9 @@ cache/
 100audio/
 *.wav
 
+# Video demo (nặng — không commit; để trên HF Space/Drive)
+*.mp4
+
 # Output / submission
 *.zip
 *.out

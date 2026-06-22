@@ -4,6 +4,177 @@
 
 ---
 
+## Báo cáo ngày 22/6/2026 (Phiên 32) — Rà soát bảo mật source: scrub username server nội bộ + chuẩn hoá .env (KHÔNG chạy thí nghiệm, điểm số KHÔNG đổi)
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** quét toàn bộ source tìm secret/link nội bộ/data/API bị lộ, xử lý và commit.
+
+### 1. 🔍 Kết quả rà soát — phần SẠCH
+- **Không có API key/token thật bị hardcode:** quét regex các định dạng key (`hf_...`, `sk-...`, `AIza...`, `ghp_...`, `AKIA...`) → 0 kết quả. Mọi `hf_xxx` / `<YOUR_..._KEY>` chỉ là placeholder.
+- **Code lấy key đúng cách:** `exp16` dùng `os.environ["GEMINI_API_KEY"/"OPENAI_API_KEY"]`; demo Gradio nhập key qua **textbox password** (không nhúng file).
+- **CodaBench `secret_key` không lộ** ở đâu (chỉ placeholder trong `.env.example`).
+- **`.gitignore` đã chặn** `.env`, `*.key`, `data/`, `cache/`, `*.pt`, `*.npz`, `*.wav` → secret & data nặng không bị commit. Không file `.env`/secret nào đang được git track.
+- **HTML slide mới** (`voicemos2026_swiss.html`, `*_sample.html`...) sạch. `/home/user/...` trong HF Space & Dockerfile là đường dẫn chuẩn HF Space (công khai) → để nguyên.
+
+### 2. 🔧 Đã sửa & commit `12efdc0`
+- Thay username nội bộ **`nhandt23` → placeholder `<user>`** trong `docs/24`, `docs/25`, `triton_service/README.md`, `triton_service/track1_env/build_track1_env.sh` (đường dẫn server giờ `/userdata/<user>/...`, IP vẫn `<ip-server>`).
+- `.env.example`: thêm `OPENAI_API_KEY` + `HF_TOKEN` (đặt qua env, không hardcode).
+- Commit **chỉ 5 file scrub thuần**; `docs/11`/`docs/13` cũng được scrub nhưng để lại vì còn lẫn nội dung session cũ chưa commit (giờ commit cùng "xong").
+
+### 3. ⚠️ Còn tồn (cần user quyết)
+- **Lịch sử git vẫn còn `nhandt23`** (commit cũ + message) — scrub working tree không xoá khỏi history; cần `git filter-repo` nếu muốn xoá triệt để.
+- **Token HF từng lộ (Phiên 19):** nếu chưa revoke thì revoke ngay trên huggingface.co.
+
+---
+
+## Báo cáo ngày 19/6/2026 (Phiên 31) — Deck thuyết trình MỚI phong cách "Swiss Modern" (skill frontend-slides) + sửa 2 hình pipeline Track 2 trong `copy 2.html`
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** cài skill tạo slide, dựng bộ slide HTML mới, sửa hình pipeline (KHÔNG chạy thí nghiệm; điểm số KHÔNG đổi).
+
+### 1. 🛠️ Sửa 2 hình pipeline Track 2 trong `voicemos2026_v2 copy 2.html`
+- Hình tổng thể (`t2over`): **bỏ box emotion2vec**, dồn audeering+UTMOS, sửa caption "2 encoder".
+- Stepper `c2arch`: stage 1 **emotion2vec → audeering wav2vec2**; **bỏ stage 6 (exp_mix)** còn 5 stage (sửa JS `panels 6→5`); **stage 5 giãn 6 ô đầu ra** (QMOS+EMOS+CAT+VAL+ARO+DOM hết chồng); concat đổi 1027+1024=2051; rút gọn text mọi stage.
+- **Bug "nút Tiếp bị ẩn":** không phải lỗi JS — nội dung stepper cao hơn khung (`overflow:hidden`) → thêm `.diagram-col svg{max-height:42vh}` + bóp margin → nav-row luôn hiện.
+
+### 2. 🎨 Cài skill `frontend-slides` (zarazhangrui) → chốt style **Swiss Modern**
+- Cài vào `~/.claude/skills/frontend-slides` (12 preset + 34 bold template). Tạo 4 file mẫu trong `slide/`: `cobalt_grid_sample.html`, `bold_signal_sample.html`, `swiss_modern_sample.html` (+ deck chính). Chốt **Swiss Modern** (trắng/đen/đỏ, lưới Bauhaus, fixed-stage 1920×1080).
+
+### 3. 🆕 Deck mới `slide/voicemos2026_swiss.html` (21 slide) + script
+- Thứ tự **Track 1 → Track 3 → Track 2** (T2 trọng tâm để cuối). Cấu trúc: Cover · Tổng quan · **MOS & SRCC** (bảng người-chấm vs model + bảng UTT vs SYS "cái nào khó hơn") · mỗi track 3 slide (bài toán/kiến trúc/per-layer) · **Leaderboard** (trước) · Kết quả · Training · Deploy Triton · **Demo video** (`slide/Demo.mp4`) · Closing. Đánh số trang tự động bằng JS.
+- Script nói dễ hiểu: `slide/voicemos2026_swiss_script.md`.
+- **Track 2 trong deck Swiss + script:** mô tả **CẢ 2 encoder (WavLM + audeering) fine-tune 6 lớp trên** (theo yêu cầu user). ⚠️ Khác bản **đã nộp exp08/exp_mix** (audeering ĐÓNG BĂNG, chỉ ft WavLM). Việc ft cả 2 + trunk = **exp11** (đã chạy 8/6 nhưng warm-start đã đỉnh → KHÔNG cải thiện, CHƯA nộp).
+
+### 4. 📋 Khác
+- Viết self-evaluation gửi mentor (Thái độ 3 / Kỹ năng 2 / Kết quả 2 + 3 việc sprint).
+- Trả lời 4 câu Q&A Track 2 (vì sao 2 model · vì sao ft 6 lớp · vì sao trunk · vì sao 6 head).
+
+---
+
+## Báo cáo ngày 19/6/2026 (Phiên 30) — Hoàn thiện slide present `voicemos2026_v2.html`: GỘP Track 2 (fusion+finetune) thành 1 pipeline · đổi font Be Vietnam Pro · bỏ gần hết công thức · thêm hình Triton (bản copy 2) · sửa slide Track1/Track3 · nhận xét baseline
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** chỉnh sửa bộ slide HTML paper-style (KHÔNG chạy thí nghiệm, điểm số & best-per-column KHÔNG đổi); rà & nhận xét pipeline baseline Track 1/3.
+
+### 1. 🔀 Gộp Track 2: C2 Fusion + C3 Fine-tune → MỘT pipeline hợp nhất (`voicemos2026_v2.html`)
+- Trước: 7 slide tách rời (`c2over → c2arch` stepper 6 panel → `c2layer → c2heads → c3over → c3arch` stepper 4 panel → `c3layer`).
+- Sau: 4 slide — **`t2over`** (overview hợp nhất: 3 encoder ❄ emotion2vec·audeering·UTMOS-neo **+** WavLM top-6 🔥 fine-tune warm-start SAILER → ⊕ → trunk → 6 cột) → **`c2arch`** (stepper 6 panel hợp nhất; panel "SAILER" cũ đổi thành **WavLM top-6 fine-tune**) → **`t2layer`** (bảng per-layer gộp E1/E2/Q/W1/W2/T/H) → giữ `c2heads`.
+- Xóa hẳn `c3over/c3arch/c3layer`. Sửa JS: bỏ `stepperConfig` id 3, đổi nhãn id 2, `stepperState` còn 3 phần tử. Đánh lại **số trang footer toàn deck** (bỏ qua slide trong comment) → đồng bộ `/27`, sửa luôn lỗi cũ lẫn `/41` & `/43`.
+
+### 2. 🔤 Đổi font cho rõ (tiếng Việt)
+- `Inter` (body) + `Playfair Display` (serif tiêu đề) → **`Be Vietnam Pro`** (300–800); giữ `JetBrains Mono` cho số/code. Sửa `@import` + mọi `font-family` (body, heading, chữ trong SVG). Lưu ý: cần Internet khi trình chiếu (font tải từ Google Fonts).
+
+### 3. ➖ Bỏ gần hết công thức toán (giữ DUY NHẤT ô SRCC có ví dụ tính tay = 0.9)
+- Bỏ: CAT-ERR, các phương trình Track 1 (layer-weight `H=ΣαH`, mean-pool, CNN, attention `softmax(QKᵀ/√d)V`), Track 3 (`ŷ=w·ReLU`, `cos=Σ…`), Track 2 (Toán từng tầng, uncertainty weighting lặp 3 lần, `ŷₜ=wₜz+bₜ`). Giữ nhãn kiến trúc (Linear/ReLU/MLP, mũi tên chiều).
+
+### 4. 🖼️ Bản `voicemos2026_v2 copy 2.html` (bản riêng, derived sau mục 1–3)
+- Slide **deploy**: thay sơ đồ ASCII bằng **hình SVG Triton service** (Client → FastAPI gateway `:18080` → Triton `:8000` 3 model track1_acr/track2_emotion/track3_sim + dynamic batching + Locust), màu theo track, font Be Vietnam Pro.
+- **Slide 8 (`t1prob`) & 13 (`t3prob`)** — "Bài toán & dữ liệu" Track 1/3: sửa lỗi `<ul>` chưa đóng (slide 8) + **tách ý theo thứ tự ①②** (ACR/CCR; Speaker/Accent) thay vì nhồi 1 dòng. (Chỉ sửa "copy 2" theo yêu cầu; file chính giữ nguyên 2 slide này.)
+
+### 5. 🔎 Nhận xét pipeline baseline Track 1 & Track 3
+- **Track 1 (URGENT-MOS):** kiến trúc fusion 4 encoder + trộn lớp tốt, ACR 0.662 ổn; **CCR 0.411 là điểm nghẽn** nhưng **bị chặn vì không có train data in-domain** → giữ baseline, chỉ ensemble/calibration nếu rảnh (ROI thấp).
+- **Track 3 (Siamese ECAPA, zero-shot):** spk 0.451 · acc 0.440 — **2 cột dùng CHUNG 1 cosine, không tách được** (ECAPA học speaker, vứt accent). **Khác Track 1: Track 3 CÓ train data (2.800/600/600)** → đang bỏ phí. **Đây là chỗ đáng đầu tư nhất ngoài Track 2.**
+- **Đề xuất Track 3 (ROI cao):** head có giám sát theo cặp `g=[eₐ;e_b;|eₐ−e_b|;eₐ⊙e_b] → MLP → 2 head spk/acc riêng`; (+) thêm encoder chuyên accent — đúng công thức thắng của Track 2 (fusion + supervised head).
+
+### 6. Việc tiếp theo
+- (gợi ý đã chốt với user) **code thử nâng cấp Track 3**: interaction-MLP 2 head trên embedding ECAPA, train 2.800 mẫu → kỳ vọng vượt 0.45/0.44. Việc nhỏ, rủi ro thấp.
+- Dọn 2 file rác trong repo nếu muốn: `voicemos2026_v2.html.bak`, `voicemos2026_v2 copy.html` (bản thừa).
+
+---
+
+## Báo cáo ngày 18/6/2026 (Phiên 29) — Thêm AUDIO-LLM (Qwen2-Audio) vào fusion Track 2: exp20 (cross-attn + LLM, KHỎE nhưng không vượt) + exp21 (mean-pool concat thô, SẬP) + giải thích kiến trúc Track 1
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** hỏi-đáp kiến trúc Track 1 (URGENT-MOS); thêm encoder audio-LLM vào Track 2 theo 2 cách, chạy/nộp DEV; rút ra bài học chuẩn hoá đặc trưng LLM.
+
+### 1. 📖 Giải thích kiến trúc Track 1 (URGENT-MOS) — multi-encoder fusion
+- Baseline Track 1 = **URGENT-MOS** (chỉ inference, không train). Luồng: **4 encoder ❄ đóng băng** (WavLM · Kimi-Audio · Qwen3-Omni · Audio-Flamingo) chạy song song; mỗi cái: CNN×7 → Transformer×24 → **trộn lớp** (αₗ học) → **mean-pool** → vector câu `eᵢ`; **fusion** concat 4 vector → 2 head: **AMPM→ACR** [1,5], **NCPM→CCR** [−3,+3] (hiệu 2 nhánh). DEV: ACR 0.662 · CCR 0.411. (Chi tiết slide `22_`; chưa đối chiếu source gốc.)
+
+### 2. 🆕 exp20 — exp18 (cross-attn) + AUDIO-LLM Qwen2-Audio (pooled concat) → KHỎE, KHÔNG vượt
+- **Kiến trúc:** giữ nguyên cross-attention WavLM(SAILER)⟷audeering (=exp18) → vector `z` 256-D; **thêm luồng 3** = Qwen2-Audio-7B (4-bit, đóng băng) → **pooled embedding 4096-D** → chuẩn hoá per-dim → **chiếu 256-D (Linear)** → concat `[z 256 | VAD3 3 | LLM 256]=515` → trunk → 3 head.
+- **Embedding LLM là gì:** đưa audio + prompt "describe emotion..." vào Qwen2-Audio, lấy `hidden_states[-1]` **mean-pool tại token audio** (KHÔNG `generate()` ra chữ — lấy "ý nghĩ" nội bộ, không lấy câu văn).
+- **Nộp DEV:** EMOS 0.8032 · CAT 0.1405 · VAL 0.6399 · ARO 0.7935 · DOM 0.7498 → **không sập, ngang exp18**. So exp18: EMOS −0.011, ARO/DOM nhích nhẹ nhưng **không phá best cột nào**. **Kết luận: audio-LLM pooled trùng tín hiệu SSL → không bổ trợ emotion MOS.**
+- Qwen2-Audio chạy được trên **T4 nhờ 4-bit (bitsandbytes)** — fp16 7B không vừa 16GB.
+
+### 3. 💀 exp21 — mean-pool concat 3 encoder THÔ → SẬP trên DEV (bài học quan trọng)
+- **Kiến trúc:** mỗi encoder mean-pool → **nối thẳng** [WavLM 1024 | audeering 1024 | VAD3 3 | LLM 4096] = 6147-D → trunk → head. KHÔNG cross-attention.
+- **Lần đầu chạy:** EMOS 0.22, **VAD=nan** (head hằng), loss đứng im → **trunk chết**. Nguyên nhân: **LLM 4096-D (4-bit) có chiều outlier cực lớn** lấn át WavLM/audeering. **Vá:** chuẩn hoá per-dim từng nhánh (mean0/std1) + `val_score` bỏ nan.
+- **Sau vá, val nội bộ ĐẸP** (EMOS 0.82 · VAD 0.80/0.87/0.81) → **NHƯNG nộp DEV SẬP:** EMOS **0.4959** · CAT 0.2332 · **VAL/ARO/DOM = 0**. Đúng vết overfit exp11 (val nội bộ >> DEV). VAD sập về hằng trên DEV → SRCC 0; EMOS còn 0.5 nhờ one-hot target ở head.
+- **Bài học kép:** (a) thêm đặc trưng LLM **bắt buộc chuẩn hoá + giảm chiều**, nối thô là sập; (b) trunk to (3.1M ở lớp Linear đầu) trên 6147-D **overfit nặng** — val nội bộ vô nghĩa, chỉ DEV mới tính.
+
+### 4. 🧩 Code + công cụ
+- 4 file mới: `exp20_audiollm_fusion_pipeline.py`+`.ipynb`, `exp21_meanpool_fusion3_pipeline.py`+`.ipynb` (jupytext convert, py_compile OK).
+- Cache pooled Qwen-emb tái dùng được giữa exp (cùng model+prompt) → khỏi trích 7B lại (vài giờ).
+
+### 5. 🎯 Hệ mạnh nhất KHÔNG đổi
+- exp20/exp21 **không vào hệ trộn cột** (không vượt cột nào). Best-per-column giữ nguyên: QMOS 0.6296 (exp13) · EMOS 0.8144 (exp18) · CAT 0.1331 (exp08) · VAL 0.6605 (exp08b) · ARO 0.7978 (exp15) · DOM 0.7539 (exp08b).
+- **Giá trị exp20/exp21 = ablation cho paper** ("thêm audio-LLM: làm đúng cách thì trung tính, làm thô thì sập").
+
+### 6. Việc tiếp theo
+- (tùy chọn) thử cho audio-LLM **chỉ nuôi VAD head** (LLM nhích ARO/DOM, hại EMOS/CAT) — lợi nhỏ.
+- Quay lại hướng **novelty thật** (Phiên 28): EMOS-as-similarity / multimodal text cho VAL — quan trọng hơn việc thêm encoder.
+
+---
+
+## Báo cáo ngày 17/6/2026 (Phiên 28) — Thử cải tiến exp18: Mamba (âm) + RANKING LOSS train-theo-SRCC (VAD nhích nhẹ) + code mới exp19 (fine-tune + cross-attn) + định hướng novelty paper
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** ba cải tiến quanh exp18 (Mamba head, ranking loss, fine-tune backbone), chạy/nộp DEV để biết điểm thật; rà lại hướng paper vì lo "chỉ là fusion".
+
+### 1. 🧪 exp18 + Mamba head (ghép từ exp15) → KẾT QUẢ ÂM, đã GỠ
+- Chèn Mamba ×2 (bidir, thuần PyTorch) vào **giữa cross-attn và pool** (cờ `USE_MAMBA`). Backbone vẫn frozen → tái dùng cache, rẻ.
+- **Nộp DEV:** EMOS 0.8144 (hoà, SRCC byte-identical vì rank không đổi) · CAT 0.1359 · VAL 0.6420 · ARO 0.7887 · DOM 0.7453 → **không cải thiện**, lẫn trong nhiễu. Đúng vết exp15 (Mamba ≈ pool). Lý do: cache đã subsample (stride 2) + cross-attn đã trộn theo thời gian → Mamba thừa.
+- **→ Đã GỠ Mamba** khỏi exp18 (trả về bản gốc giữ kỷ lục EMOS 0.8144). Giữ làm **ablation âm** cho paper (củng cố C5: đơn giản là đủ).
+
+### 2. 🎯 exp18 + RANKING LOSS (train theo SRCC) — hướng đáng theo
+- **Phát hiện:** exp18 (và mọi exp) train bằng **MSE** nhưng leaderboard chấm **SRCC (xếp hạng)** → lệch mục tiêu. Bản ranking cũ (Phiên 23) lỗi (1 cặp/batch).
+- **Thêm cờ `LAMBDA_RANK`** + `pairwise_rank_loss` (logistic, **TOÀN BỘ cặp/batch** — sửa lỗi cũ) cộng vào MSE cho 4 cột SRCC (EMOS/VAL/ARO/DOM); CAT giữ soft-CE; clip [1,5] khi xuất.
+- **Nộp DEV λ=0.3:** EMOS 0.8079 · CAT 0.1357 · VAL 0.6426 · ARO 0.7947 · **DOM 0.7522** → so bản λ=0 (MSE): **VAD đều nhích** (DOM **+0.0096**, ARO +0.003, VAL +0.002), **EMOS tụt nhẹ** (−0.0065). Quy luật rõ: ranking giúp cột còn dư địa (VAD), hại cột bão hoà (EMOS). **Chưa cột nào vượt best-per-column** (DOM 0.7522 sát dưới 0.7539). Kết luận: đòn bẩy lớn hơn = đem ranking sang model **fine-tune** (dư địa lớn). User định thử λ=0.7.
+
+### 3. 🏗️ exp19 — FINE-TUNE WavLM (dưới) + CROSS-ATTENTION (trên) — MỚI CODE, CHƯA CHẠY
+- Lấp ô trống: exp08 (ft+concat) · exp18 (frozen+xattn) → **exp19 = ft + xattn**. Giả thuyết: exp18 thua VAD vì frozen sức chứa nhỏ.
+- **Mẹo T4:** fine-tune **top-6 lớp WavLM** (LIVE, có grad) + **audeering ĐÓNG BĂNG cache** (tái dùng `aud_seq` exp18) → chỉ forward WavLM mỗi step. Nhẹ hơn exp11 (ft cả 2 → overfit).
+- Discriminative LR (bb 1e-5 / head 1e-3) + AMP + grad-accum (2×8) + ranking loss + **lưu CẢ backbone** (bài học exp08). File: `exp19_finetune_crossattn_pipeline.py` + `.ipynb` (py_compile OK; đã fix bug GradScaler flush).
+- ⚠️ Cảnh giác **overfit** (vết exp11) → phải nộp DEV mới tin.
+
+### 4. 📄 Định hướng paper (user lo "chỉ là fusion, không novelty")
+- Thừa nhận thẳng: "fusion 2 encoder" tự nó **incremental**. Đóng góp thật nên là: **(a) bài toán mới** (dự đoán EMOS/CAT/VAD khớp human-MOS — gần như chưa ai làm hệ thống) + **(b) C1 bổ trợ + C5 hiệu quả**.
+- Đề xuất thêm **1 novelty phương pháp** (không phải fusion): **Hướng A = EMOS-as-similarity** (học prototype cảm xúc, EMOS = độ giống giọng↔target — độc nhất Track 2, mạnh nhất); Hướng B = **multimodal text/transcript cho VAL** (cột yếu nhất); Hướng C = đổi tựa thành **hiệu quả/chi phí**. Ranking/Mamba/cross-attn chỉ là *ablation*, không cứu được "chỉ-là-fusion".
+- ⚠️ Bảng kết quả paper `19_` vẫn số cũ (EMOS 0.811/QMOS 0.548) — **chưa cập nhật** các kỷ lục mới (EMOS 0.8144/QMOS 0.6296/ARO 0.7978).
+
+### 5. 🖥️ Triton serving — nhắc trạng thái GPU
+- Track 2 + Track 3 READY (CPU test). Track 1 chưa chốt. **GPU chưa chạy lần nào**. Cách bật GPU: B0 (đảo KIND_CPU→GPU + sửa compose) → `run_server.sh` (không `--no-gpu`) → curl cổng **18080** (xem `docs/24`).
+
+### 6. Việc tiếp theo
+- 🟠 (tuỳ chọn) chạy exp18 λ=0.7 → so DOM/VAL với best.
+- 🔴 **Smoke test + chạy exp19** (fine-tune + cross-attn + ranking) — kỳ vọng phá kỷ lục VAD/EMOS; cẩn thận overfit.
+- 🟢 **Quyết novelty paper:** lên kế hoạch chi tiết **Hướng A (EMOS-as-similarity)** — vừa thí nghiệm vừa đóng góp.
+- 🟠 Cập nhật bảng kết quả `19_` + ghép/nộp **bản trộn cột mới** (EMOS←exp18 0.8144 + QMOS←exp13 + ARO←exp15 + VAL/DOM←exp08b).
+
+---
+
+## Báo cáo ngày 16/6/2026 (Phiên 27) — exp18 CROSS-ATTENTION FUSION (kỷ lục cột EMOS 0.8144) + runbook test Triton 3 track/UI + tài liệu kiến trúc
+
+**Người thực hiện:** Tran Minh Toan · **Nội dung:** thử kiến trúc fusion mới cho nhánh cảm xúc Track 2 (cross-attention thay concat), chạy ra điểm DEV thật; viết hướng dẫn test hệ Triton 3 track + UI; tạo tài liệu kiến trúc Track 2.
+
+### 1. 🧪 exp18 — Cross-Attention Fusion (việc chính)
+- **Ý tưởng:** thay phép **concat thô** `[WavLM | audeering]` (exp08) bằng **cross-attention** — WavLM tạo *query* "hỏi" audeering (*key/value*) → gộp có căn chỉnh theo từng frame. Hai backbone **ĐÓNG BĂNG + cache frame-level**, chỉ train module cross-attention + heads (~1.7M tham số). Hai model nền: **WavLM-large (SAILER, chuyên cảm xúc)** + **audeering wav2vec2-large (chuyên VAD)**.
+- **Plan mode** (đã duyệt) → viết mới `kaggle_baseline/track2/exp18_crossattn_emotion_pipeline.py` + `.ipynb`. Tái dùng: EmoHeads/audeering/z-score (exp08), cache frame `.npy` fp16 + collate (exp14), attentive-pool có mask (exp15), uncertainty weighting + train loop frozen (exp04). Viết mới: `class CrossAttnFusion` + `extract_aud_seq` (giữ frame-level).
+- **Bug đã fix:** thiếu `loralib` → SAILER wrapper lỗi → fallback "WavLM trắng" (mất warm-start cảm xúc, EMOS tụt). Thêm `loralib`+`speechbrain` → SAILER nạp đúng (`✅ Backbone WavLM từ SAILER wrapper tại '.backbone_model'`).
+- **Kết quả DEV (CodaBench), chạy full 12.746 mẫu:** **EMOS 0.8144 🏆 KỶ LỤC CỘT** (vượt exp08b 0.8116, biên nhỏ +0.0028) · CAT err 0.1351 · VAL 0.6403 · ARO 0.7917 · DOM 0.7426. QMOS để fallback (trộn cột exp13 sau).
+- **Nhận xét:** VAL/DOM/CAT **KHÔNG** vượt best cũ; val nội bộ (EMOS 0.821/VAL 0.786/ARO 0.867/DOM 0.791) **lạc quan hơn DEV** như thường lệ. Giá trị lớn nhất = **cross-attn frozen ≈ exp08 fine-tune mà rẻ hơn nhiều** → đóng góp **C5 (hiệu quả/chi phí)** cho paper.
+
+### 2. 🖥️ Test hệ Triton serving 3 track + UI (CPU mode)
+- Viết runbook step-by-step (sửa 2 điểm lệch `docs/24`: cổng gateway thật là **18080**, và **phải dựng env Track 1** bằng `build_track1_env.sh` trước). User đã dựng env Track 1 + chạy CPU.
+- Fix lỗi UI Gradio: cổng 7860 bận (`Cannot find empty port`) → chạy `GRADIO_SERVER_PORT=7880` → **UI lên** (`http://0.0.0.0:7880`), cảnh báo Starlette `HTTP_422...` vô hại.
+- **Track 1 vẫn còn lỗi** (đang test sau khi dựng env riêng Phiên 26) → mai tiếp tục chỉnh.
+
+### 3. 📄 Tài liệu
+- Tạo mới `docs/25_track2_architecture.md` — mô tả đầy đủ kiến trúc Track 2 (3 nhánh trộn cột + sơ đồ + license + training), cho người mới.
+
+### 4. Việc tiếp theo
+- 🔴 Sửa nốt **Track 1** trên Triton (curl `/track1` ra `acr_a`) → chốt 3 track READY.
+- 🟠 exp18 ablation rẻ (cache giữ nguyên, chỉ train lại head): `XATTN_DIR=bi/aud_q`, `N_LAYERS=2`, `USE_VAD3` on/off → bảng cho paper; có thể cứu VAL/DOM.
+- 🟠 Ghép + nộp **bản trộn cột mới**: QMOS←exp13 · **EMOS←exp18 (0.8144)** · CAT←exp08 · VAL←exp08b · ARO←exp15 · DOM←exp08b.
+- 🟡 Cập nhật paper `19_`: bảng kết quả + đóng góp C5 với số exp18.
+
+---
+
 ## Báo cáo ngày 16/6/2026 (Phiên 26) — FIX Track 1 trên Triton: cô lập môi trường riêng (conda-pack) vì xung đột `transformers` cứng với Track 2
 
 **Người thực hiện:** Tran Minh Toan · **Nội dung:** truy & sửa dứt điểm lỗi Track 1 (UNAVAILABLE từ Phiên 25). Đào ra **xung đột phiên bản cứng**, chọn hướng **cô lập env riêng cho Track 1** bằng cơ chế *per-model execution environment* của Triton. Không chạy thí nghiệm, **leaderboard không đổi** (phần serving).
@@ -118,7 +289,7 @@ Triton metrics :8002 · docker-compose · mạng nội bộ
 - Gateway vs Triton: gateway nói HTTP/multipart với người dùng, Triton chỉ nhận tensor → gateway là người dịch wav→tensor.
 
 ### 6. Việc tiếp theo
-- 🟠 **Chạy thật trên server** (`/home/nhandt23/project/VoiceMOS`): build image, `bash run_server.sh`, curl test 3 track, đối chiếu điểm Track 2 với api_service cũ (phải khớp vì cùng ckpt exp08).
+- 🟠 **Chạy thật trên server** (`/home/<user>/project/VoiceMOS`): build image, `bash run_server.sh`, curl test 3 track, đối chiếu điểm Track 2 với api_service cũ (phải khớp vì cùng ckpt exp08).
 - 🟠 **Locust loadtest**: upload vài wav mẫu, ramp 20 user, ghi RPS/p95; so `max_batch_size 1 vs 8` lấy số cho slide/paper.
 - 🟢 Verify VRAM 3 model < 12GB (`nvidia-smi`); nếu căng giảm `count` hoặc lazy-load.
 - 🔒 (vẫn nợ từ phiên trước) revoke token HF lộ; ablation ranking exp13; nộp bản trộn cột mới.

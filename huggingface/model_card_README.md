@@ -19,6 +19,20 @@ Bộ checkpoint cho **VoiceMOS Challenge 2026 Track 2** — dự đoán điểm 
 (EMOS / EmoCat / VAD) và chất lượng (QMOS). Đây là các model train trong dự án; dùng kèm code ở
 [demo Space](https://huggingface.co/spaces/tranminhtoan140601/voicemos2026-demo).
 
+## 📊 KẾT QUẢ — checkpoint `ft_emotion_full_20epoch.pt` (exp08, DEV, UTT-SRCC)
+
+> Điểm của **đúng checkpoint cảm xúc trong repo này** trên tập DEV. `↑` cao hơn = tốt hơn · `↓` thấp hơn = tốt hơn.
+
+| Cột | Điểm (DEV) |
+|---|---|
+| **EMOS** ↑ | **0.811** |
+| **EmoCat-err** ↓ | **0.133** |
+| **Valence** ↑ | **0.659** |
+| **Arousal** ↑ | **0.793** |
+| **Dominance** ↑ | **0.751** |
+
+> ℹ️ Checkpoint này **chuyên cảm xúc** (5 cột trên). **QMOS** (chất lượng giọng) dùng model riêng (`ft_qmos_utmos.pt`), không lấy từ ckpt này. Số liệu nguồn: `docs/18_leaderboard_history.md` (hàng exp08, 5/6).
+
 ## Checkpoint trong repo
 
 | File | Experiment | Mô tả | Điểm DEV (UTT-SRCC) |
@@ -27,7 +41,7 @@ Bộ checkpoint cho **VoiceMOS Challenge 2026 Track 2** — dự đoán điểm 
 | `ft_qmos_utmos.pt` | exp13 | Fine-tune UTMOS cho QMOS (chất lượng giọng) | QMOS (exp07 mốc 0.548) |
 | `ft_joint_full.pt` | exp11 | Fine-tune đồng thời WavLM + audeering, fusion 1 model | val nội bộ ~0.83 (nghi overfit) |
 
-> **Hệ 6 cột mạnh nhất** = trộn cột: 5 cảm xúc ← `ft_emotion_full_20epoch.pt` + QMOS ← exp07 →
+> **Hệ 6 cột đã NỘP (`exp_mix`)** = trộn cột: 5 cảm xúc ← `ft_emotion_full_20epoch.pt` (bảng trên) + QMOS ← exp07 →
 > QMOS 0.548 · EMOS 0.811 · CAT 0.133 · VAD 0.659/0.793/0.751.
 
 ## Kiến trúc & hằng số (PHẢI khớp khi nạp `ft_emotion_full_20epoch.pt`)
