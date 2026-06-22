@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceMOS Challenge 2026 — Swiss Modern</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&family=Nunito:wght@400;600;700&display=swap"
+    rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       SWISS MODERN — VoiceMOS 2026 (spine)
+       Trắng · đen · 1 nhấn đỏ. Lưới mô-đun, bố cục lệch, hình học.
+       ========================================================= */
+    :root {
+      --paper: #ffffff;
+      --ink: #111111;
+      --red: #ff3300;
+      --grid: #ececec;
+      --muted: #8a8a8a;
+      --font-display: "Archivo", sans-serif;
+      --font-body: "Nunito", sans-serif;
+      --edge: 96px;
+      --stage-bg: #d8d8d8;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* ---------- viewport-base.css (fixed 16:9 stage) ---------- */
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--stage-bg);
+    }
+
+    .deck-viewport {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background: var(--stage-bg);
+    }
+
+    .deck-stage {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      transform-origin: 0 0;
+      background: var(--paper);
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      background: var(--paper);
+      transition: opacity .26s ease;
+    }
+
+    .slide.active,
+    .slide.visible {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 1;
+    }
+
+    svg {
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    @media print {
+
+      html,
+      body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+      }
+
+      .deck-viewport {
+        position: static;
+        overflow: visible;
+      }
+
+      .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+      }
+
+      .slide {
+        position: relative;
+        visibility: visible !important;
+        opacity: 1 !important;
+        break-after: page;
+      }
+    }
+
+    /* lưới dọc 12 cột mảnh (chữ ký Swiss) */
+    .slide::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(to right,
+          transparent 0,
+          transparent calc(100% / 12 - 1px),
+          var(--grid) calc(100% / 12 - 1px),
+          var(--grid) calc(100% / 12));
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .slide>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* chrome trên: thanh đỏ + tiêu đề chạy + breadcrumb */
+    .topbar {
+      position: absolute;
+      top: 64px;
+      left: var(--edge);
+      right: var(--edge);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+
+    .topbar .l {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .redbar {
+      width: 56px;
+      height: 14px;
+      background: var(--red);
+      flex: none;
+    }
+
+    .crumbs span {
+      color: var(--muted);
+    }
+
+    .crumbs span.on {
+      color: var(--red);
+    }
+
+    .rule {
+      position: absolute;
+      top: 104px;
+      left: var(--edge);
+      right: var(--edge);
+      height: 2px;
+      background: var(--ink);
+    }
+
+    .pagenum {
+      position: absolute;
+      bottom: 52px;
+      right: var(--edge);
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.1em;
+      color: var(--ink);
+    }
+
+    .navhint {
+      position: absolute;
+      bottom: 52px;
+      left: var(--edge);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    /* ---------- COVER ---------- */
+    .cover .num {
+      position: absolute;
+      top: 150px;
+      left: var(--edge);
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 30px;
+      color: var(--red);
+    }
+
+    .cover h1 {
+      position: absolute;
+      left: var(--edge);
+      top: 350px;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 172px;
+      line-height: 0.86;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .cover h1 em {
+      font-style: normal;
+      color: var(--red);
+    }
+
+    .cover .sub {
+      position: absolute;
+      left: var(--edge);
+      top: 770px;
+      max-width: 920px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 30px;
+      line-height: 1.4;
+      color: var(--ink);
+    }
+
+    .cover .meta {
+      position: absolute;
+      left: var(--edge);
+      bottom: 96px;
+      display: flex;
+      gap: 38px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .cover .geo {
+      position: absolute;
+      top: 200px;
+      right: var(--edge);
+      width: 520px;
+      height: 520px;
+    }
+
+    /* ---------- SECTION DIVIDER ---------- */
+    .divider .big {
+      position: absolute;
+      left: var(--edge);
+      top: 300px;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 300px;
+      line-height: 0.8;
+      color: var(--ink);
+      letter-spacing: -0.03em;
+    }
+
+    .divider .big em {
+      font-style: normal;
+      color: var(--red);
+    }
+
+    .divider .tname {
+      position: absolute;
+      left: var(--edge);
+      top: 690px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 64px;
+      color: var(--ink);
+    }
+
+    .divider .tdesc {
+      position: absolute;
+      left: var(--edge);
+      top: 790px;
+      max-width: 1100px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 28px;
+      color: var(--muted);
+    }
+
+    .divider .sidebar {
+      position: absolute;
+      right: var(--edge);
+      top: 300px;
+      width: 18px;
+      height: 480px;
+      background: var(--red);
+    }
+
+    /* ---------- ARCH / CONTENT FRAME ---------- */
+    .frame {
+      position: absolute;
+      inset: 160px var(--edge) 110px;
+    }
+
+    .frame h2 {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 70px;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      line-height: 0.95;
+    }
+
+    .frame h2 em {
+      font-style: normal;
+      color: var(--red);
+    }
+
+    .diagram {
+      margin-top: 40px;
+    }
+
+    .diagram svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .legend {
+      display: flex;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-top: 26px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--ink);
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 26px;
+      height: 14px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    .sw-line {
+      border: 2px solid var(--ink);
+      height: 16px !important;
+    }
+
+    .sw-red {
+      background: var(--red);
+    }
+
+    .sw-blk {
+      background: var(--ink);
+    }
+
+    /* ---------- OVERVIEW / RESULTS TABLE ---------- */
+    .dt {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 40px;
+      font-family: var(--font-body);
+    }
+
+    .dt th {
+      text-align: left;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink);
+      padding: 0 20px 16px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .dt td {
+      padding: 26px 20px;
+      border-bottom: 1px solid var(--grid);
+      vertical-align: middle;
+    }
+
+    .dt .tnum {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 46px;
+      color: var(--red);
+      width: 90px;
+    }
+
+    .dt .tn {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 30px;
+      color: var(--ink);
+    }
+
+    .dt .td-desc {
+      font-weight: 600;
+      font-size: 21px;
+      color: var(--muted);
+    }
+
+    .dt .score {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 30px;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    .dt .score em {
+      font-style: normal;
+      color: var(--red);
+    }
+
+    /* ---------- BÀI TOÁN (danh sách đánh số) ---------- */
+    .blist {
+      margin-top: 44px;
+      display: flex;
+      flex-direction: column;
+      gap: 34px;
+    }
+
+    .blist .row {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
+    }
+
+    .blist .ix {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 48px;
+      color: var(--red);
+      line-height: .9;
+      flex: none;
+      width: 78px;
+    }
+
+    .blist h3 {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 32px;
+      color: var(--ink);
+      margin-bottom: 10px;
+    }
+
+    .blist p {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 23px;
+      line-height: 1.5;
+      color: var(--muted);
+      max-width: 1320px;
+    }
+
+    .blist code,
+    .dt code {
+      font-family: var(--font-body);
+      font-weight: 700;
+      background: #f2f2f2;
+      padding: 1px 9px;
+      color: var(--ink);
+    }
+
+    .note {
+      margin-top: 34px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 21px;
+      color: var(--ink);
+      border-left: 8px solid var(--red);
+      padding-left: 20px;
+    }
+
+    /* ---------- BẢNG PER-LAYER ---------- */
+    .dt.layers td {
+      padding: 16px 20px;
+      font-size: 20px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      color: #333;
+      vertical-align: top;
+    }
+
+    .dt .hash {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 26px;
+      color: var(--red);
+      width: 64px;
+    }
+
+    .dt .lname {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+
+    /* ---------- BẢNG LEADERBOARD (nén, nhiều cột) ---------- */
+    .dt.lb th,
+    .dt.lb td {
+      text-align: center;
+      padding: 15px 10px;
+      font-size: 21px;
+      font-family: var(--font-body);
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .dt.lb td.day {
+      font-family: var(--font-display);
+      font-weight: 800;
+      text-align: left;
+    }
+
+    .dt.lb em {
+      font-style: normal;
+      color: var(--red);
+    }
+
+    .dt.lb td.dim {
+      color: #b8b8b8;
+      font-weight: 600;
+    }
+
+    /* ---------- SPEC TABLE (training) ---------- */
+    .dt.spec td {
+      padding: 20px 20px;
+      vertical-align: top;
+    }
+
+    .dt.spec .k {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 23px;
+      color: var(--ink);
+      width: 360px;
+    }
+
+    .dt.spec .v {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 21px;
+      color: #333;
+      line-height: 1.4;
+    }
+
+    /* ---------- SPLIT (text + minh hoạ) ---------- */
+    .split {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 56px;
+      align-items: center;
+    }
+
+    .split svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ---------- CLOSING ---------- */
+    .closing h1 {
+      position: absolute;
+      left: var(--edge);
+      top: 380px;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 188px;
+      line-height: 0.85;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .closing h1 em {
+      font-style: normal;
+      color: var(--red);
+    }
+
+    .closing .sub {
+      position: absolute;
+      left: var(--edge);
+      top: 720px;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 30px;
+      color: var(--muted);
+    }
+
+    .closing .geo {
+      position: absolute;
+      right: var(--edge);
+      top: 250px;
+      width: 420px;
+      height: 420px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="deck-viewport">
+    <main class="deck-stage" id="deckStage">
+
+      <!-- ===== 01 — COVER ===== -->
+      <section class="slide cover active">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>VoiceMOS Challenge 2026</span></div>
+          <div class="crumbs"><span>Emotional TTS</span> · <span class="on">INTERSPEECH</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="num">— ĐỀ TÀI MOS PREDICTION</div>
+        <svg class="geo" viewBox="0 0 520 520" aria-hidden="true">
+          <circle cx="300" cy="220" r="210" fill="none" stroke="#111" stroke-width="2.5" />
+          <rect x="40" y="250" width="240" height="240" fill="#ff3300" />
+          <line x1="40" y1="250" x2="510" y2="250" stroke="#111" stroke-width="2.5" />
+        </svg>
+        <h1>Machine<br><em>Mos</em></h1>
+        <div class="sub">Dạy máy chấm điểm giọng nói thay cho con người</div>
+        <div class="meta"><span>TRAN MINH TOAN</span><span>VFS</span><span>19.06.2026</span></div>
+        <div class="pagenum">01 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== 02 — TỔNG QUAN 3 TRACK ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Tổng quan</span></div>
+          <div class="crumbs"><span class="on">3 TRACK</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Ba bài toán, <em>một mục tiêu</em>: dự đoán điểm người nghe</h2>
+          <table class="dt">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Track</th>
+                <th>Đo cái gì</th>
+                <th>Điểm tốt nhất (UTT-SRCC)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="tnum">1</td>
+                <td class="tn">Speech Enhancement</td>
+                <td class="td-desc">Chất lượng giọng đã khử nhiễu — ACR &amp; CCR</td>
+                <td class="score">ACR <em>0.662</em> · CCR 0.411</td>
+              </tr>
+              <tr>
+                <td class="tnum">2</td>
+                <td class="tn">Emotional TTS ⭐</td>
+                <td class="td-desc">Chất lượng + cảm xúc giọng tổng hợp — 6 cột</td>
+                <td class="score">EMOS <em>0.811</em> · QMOS 0.548</td>
+              </tr>
+              <tr>
+                <td class="tnum">3</td>
+                <td class="tn">Codec Synthesis</td>
+                <td class="td-desc">Tương đồng giọng &amp; chất giọng vùng miền</td>
+                <td class="score">SPK <em>0.451</em> · ACC 0.440</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagenum">02 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== CÁCH CHẤM (1): MOS ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Cách chấm điểm</span></div>
+          <div class="crumbs"><span class="on">MOS</span> · <span>SRCC</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Điểm MOS — <em>Mean Opinion Score</em></h2>
+          <div class="split">
+            <div class="blist" style="margin-top:0">
+              <div class="row">
+                <div class="ix">01</div>
+                <div>
+                  <h3>Nhiều người cùng chấm 1 audio</h3>
+                  <p>Mỗi người nghe cho điểm thang <code>1–5</code> (1 = rất tệ, 5 = rất tốt) theo cảm nhận chủ quan của
+                    riêng họ.</p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="ix">02</div>
+                <div>
+                  <h3>Lấy trung bình = MOS</h3>
+                  <p>Cộng điểm tất cả người nghe rồi chia số người → ra <strong>1 điểm MOS</strong> đại diện cho audio
+                    đó.</p>
+                </div>
+              </div>
+              <div class="row">
+                <div class="ix">03</div>
+                <div>
+                  <h3>Bài toán của ta</h3>
+                  <p>Huấn luyện model <strong>dự đoán điểm MOS</strong> của con người mà <em>không cần</em> tổ chức test
+                    nghe lại — vừa nhanh, vừa rẻ.</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <svg viewBox="0 0 600 610" role="img" aria-label="Minh hoạ điểm MOS">
+                <defs>
+                  <marker id="am" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+                    orient="auto-start-reverse">
+                    <path d="M2 1 L8 5 L2 9" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round"
+                      stroke-linejoin="round" />
+                  </marker>
+                </defs>
+
+                <!-- audio nguồn -->
+                <rect x="196" y="10" width="208" height="92" fill="#111" />
+                <text x="300" y="48" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="22"
+                  fill="#fff">🔊 1 AUDIO</text>
+                <polyline points="234,80 252,62 270,86 288,54 306,84 324,60 342,82 360,66 378,80" fill="none"
+                  stroke="#ff3300" stroke-width="3" />
+
+                <!-- mũi tên audio → 4 người nghe -->
+                <g stroke="#111" stroke-width="2" fill="none" marker-end="url(#am)">
+                  <line x1="300" y1="104" x2="92" y2="206" />
+                  <line x1="300" y1="104" x2="228" y2="206" />
+                  <line x1="300" y1="104" x2="372" y2="206" />
+                  <line x1="300" y1="104" x2="508" y2="206" />
+                </g>
+
+                <!-- người nghe 1 (5) -->
+                <circle cx="84" cy="232" r="22" fill="#fff" stroke="#111" stroke-width="2" />
+                <path d="M54 312 C54 264 114 264 114 312 Z" fill="#fff" stroke="#111" stroke-width="2" />
+                <rect x="48" y="322" width="72" height="58" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="84" y="363" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="32"
+                  fill="#ff3300">5</text>
+
+                <!-- người nghe 2 (4) -->
+                <circle cx="228" cy="232" r="22" fill="#fff" stroke="#111" stroke-width="2" />
+                <path d="M198 312 C198 264 258 264 258 312 Z" fill="#fff" stroke="#111" stroke-width="2" />
+                <rect x="192" y="322" width="72" height="58" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="228" y="363" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="32"
+                  fill="#ff3300">4</text>
+
+                <!-- người nghe 3 (5) -->
+                <circle cx="372" cy="232" r="22" fill="#fff" stroke="#111" stroke-width="2" />
+                <path d="M342 312 C342 264 402 264 402 312 Z" fill="#fff" stroke="#111" stroke-width="2" />
+                <rect x="336" y="322" width="72" height="58" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="372" y="363" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="32"
+                  fill="#ff3300">5</text>
+
+                <!-- người nghe 4 (3) -->
+                <circle cx="516" cy="232" r="22" fill="#fff" stroke="#111" stroke-width="2" />
+                <path d="M486 312 C486 264 546 264 546 312 Z" fill="#fff" stroke="#111" stroke-width="2" />
+                <rect x="480" y="322" width="72" height="58" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="516" y="363" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="32"
+                  fill="#ff3300">3</text>
+
+                <text x="300" y="408" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="15"
+                  letter-spacing="0.1em" fill="#8a8a8a">4 NGƯỜI NGHE · MỖI NGƯỜI 1 ĐIỂM (1–5)</text>
+
+                <!-- mũi tên điểm → trung bình -->
+                <g stroke="#111" stroke-width="2" fill="none" marker-end="url(#am)">
+                  <line x1="84" y1="420" x2="280" y2="470" />
+                  <line x1="228" y1="420" x2="292" y2="470" />
+                  <line x1="372" y1="420" x2="308" y2="470" />
+                  <line x1="516" y1="420" x2="320" y2="470" />
+                </g>
+
+                <!-- hộp MOS -->
+                <rect x="150" y="474" width="300" height="124" fill="#ff3300" />
+                <text x="300" y="512" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="18"
+                  fill="#ffe2d9">trung bình: ( 5 + 4 + 5 + 3 ) ÷ 4</text>
+                <text x="300" y="566" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="42"
+                  fill="#fff">MOS = 4.25</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== CÁCH CHẤM (2): SRCC ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Cách chấm điểm</span></div>
+          <div class="crumbs"><span>MOS</span> · <span class="on">SRCC</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>SRCC — <em>tương quan thứ hạng</em></h2>
+          <div class="split">
+            <div class="blist" style="margin-top:0">
+              <div class="row">
+                <div class="ix">01</div>
+                <div>
+                  <h3>Đo tương quan THỨ HẠNG</h3>
+                  <p>Metric chính, ∈ <code>[−1, 1]</code>, càng gần 1 càng tốt. Chỉ cần model <strong>xếp đúng thứ
+                      tự</strong> các audio — không bắt khớp giá trị tuyệt đối.</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <table class="dt lb">
+                <thead>
+                  <tr>
+                    <th style="text-align:left">Audio</th>
+                    <th>MOS<br>thật</th>
+                    <th>Model<br>dự đoán</th>
+                    <th>hạng<br>thật→DĐ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="day">Audio 1</td>
+                    <td>4.6</td>
+                    <td><em>4.4</em></td>
+                    <td>1 → 1</td>
+                  </tr>
+                  <tr>
+                    <td class="day">Audio 2</td>
+                    <td>4.1</td>
+                    <td><em>3.9</em></td>
+                    <td>2 → 2</td>
+                  </tr>
+                  <tr>
+                    <td class="day">Audio 3</td>
+                    <td>3.5</td>
+                    <td><em>3.7</em></td>
+                    <td>3 → 3</td>
+                  </tr>
+                  <tr>
+                    <td class="day">Audio 4</td>
+                    <td>2.2</td>
+                    <td><em>2.5</em></td>
+                    <td>4 → 4</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p
+                style="margin-top:18px;font-family:var(--font-body);font-weight:700;font-size:18px;color:var(--ink);text-align:center">
+                Cùng thứ hạng (Audio 1 &gt; 2 &gt; 3 &gt; 4) → <span style="color:var(--red)">SRCC ≈ 1</span></p>
+            </div>
+          </div>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== CÁCH CHẤM (3): UTT vs SYS-SRCC — VÍ DỤ TÍNH TAY ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Cách chấm điểm</span></div>
+          <div class="crumbs"><span>MOS</span> · <span class="on">UTT vs SYS</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>UTT-SRCC vs SYS-SRCC — <em>cùng kết quả, độ phạt khác nhau</em></h2>
+          <div class="split" style="grid-template-columns:0.92fr 1.08fr">
+            <div>
+              <table class="dt lb" style="margin-top:0">
+                <thead>
+                  <tr>
+                    <th style="text-align:left">Model · Audio</th>
+                    <th>MOS<br>thật</th>
+                    <th>Model<br>dự đoán</th>
+                    <th>hạng<br>thật→DĐ</th>
+                    <th>dᵢ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="day">Model 1 · Audio 1</td>
+                    <td>4.8</td>
+                    <td><em>4.3</em> ⚠️</td>
+                    <td>1 → 2</td>
+                    <td><em>−1</em></td>
+                  </tr>
+                  <tr>
+                    <td class="day">Model 1 · Audio 2</td>
+                    <td>4.4</td>
+                    <td><em>4.6</em> ⚠️</td>
+                    <td>2 → 1</td>
+                    <td><em>+1</em></td>
+                  </tr>
+                  <tr>
+                    <td class="day">Model 2 · Audio 1</td>
+                    <td>3.8</td>
+                    <td>3.9</td>
+                    <td>3 → 3</td>
+                    <td class="dim">0</td>
+                  </tr>
+                  <tr>
+                    <td class="day">Model 2 · Audio 2</td>
+                    <td>3.4</td>
+                    <td>3.5</td>
+                    <td>4 → 4</td>
+                    <td class="dim">0</td>
+                  </tr>
+                  <tr>
+                    <td class="day">Model 3 · Audio 1</td>
+                    <td>2.4</td>
+                    <td><em>2.1</em> ⚠️</td>
+                    <td>5 → 6</td>
+                    <td><em>−1</em></td>
+                  </tr>
+                  <tr>
+                    <td class="day">Model 3 · Audio 2</td>
+                    <td>2.0</td>
+                    <td><em>2.3</em> ⚠️</td>
+                    <td>6 → 5</td>
+                    <td><em>+1</em></td>
+                  </tr>
+                </tbody>
+              </table>
+              <p
+                style="margin-top:14px;font-family:var(--font-body);font-weight:600;font-size:17px;color:var(--muted);text-align:center">
+                ⚠️ = xếp sai thứ tự trong model (Model 1, Model 3)<br>
+                <strong style="color:var(--ink)">Σdᵢ² = 1+1+0+0+1+1 = 4</strong></p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:18px">
+              <!-- công thức Spearman chung -->
+              <div style="display:flex;align-items:center;gap:18px;border-bottom:2px solid var(--ink);padding-bottom:16px">
+                <span style="font-family:var(--font-display);font-weight:900;font-size:36px;color:var(--ink)">ρ = 1
+                  −</span>
+                <span
+                  style="display:inline-flex;flex-direction:column;text-align:center;font-family:var(--font-display);font-weight:800">
+                  <span style="font-size:26px;color:var(--red);padding:0 14px 6px">6 · Σ dᵢ²</span>
+                  <span
+                    style="border-top:3px solid var(--ink);font-size:26px;color:var(--ink);padding:6px 14px 0">n ( n² −
+                    1 )</span>
+                </span>
+                <span style="font-family:var(--font-body);font-weight:600;font-size:15px;color:var(--muted)">dᵢ = lệch
+                  thứ hạng<br>n = số mẫu</span>
+              </div>
+              <!-- UTT box -->
+              <div style="border:2px solid var(--ink);padding:16px 22px">
+                <div style="font-family:var(--font-display);font-weight:800;font-size:23px;color:var(--ink)">UTT-SRCC ·
+                  từng audio · n = 6 · Σdᵢ² = 4</div>
+                <div
+                  style="margin-top:8px;font-family:var(--font-display);font-weight:800;font-size:22px;color:var(--ink);line-height:1.5">
+                  ρ = 1 − <span style="color:var(--red)">6·4</span> / [ 6·(6²−1) ]<br>
+                  = 1 − 24/210 = <span style="font-size:32px;font-weight:900;color:var(--red)">0.886</span></div>
+              </div>
+              <!-- SYS box -->
+              <div style="border:2px solid var(--ink);padding:16px 22px">
+                <div style="font-family:var(--font-display);font-weight:800;font-size:23px;color:var(--ink)">SYS-SRCC ·
+                  trung bình mỗi model · n = 3 · Σdᵢ² = 0</div>
+                <div
+                  style="margin-top:8px;font-family:var(--font-display);font-weight:800;font-size:22px;color:var(--ink);line-height:1.5">
+                  ρ = 1 − <span style="color:var(--red)">6·0</span> / [ 3·(3²−1) ]<br>
+                  = 1 − 0/24 = <span style="font-size:32px;font-weight:900;color:var(--red)">1.000</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="note"><strong>UTT 0.886 &lt; SYS 1.000</strong> — lỗi xếp sai trong model bị trung bình hóa mất ⟹
+            <strong style="color:var(--red)">UTT-SRCC phạt nặng hơn</strong> → là cột chính trên leaderboard.</div>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== 03 — DIVIDER TRACK 1 ===== -->
+      <section class="slide divider">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 1</span></div>
+          <div class="crumbs"><span class="on">Track 1</span> · <span>Track 2</span> · <span>Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="sidebar"></div>
+        <div class="big"><em>0</em>1</div>
+        <div class="tname">Speech Enhancement — URGENT-MOS</div>
+        <div class="tdesc">Chấm chất lượng giọng đã qua khử nhiễu: ACR (tuyệt đối) + CCR (so sánh), 9 ngôn ngữ.</div>
+        <div class="pagenum">03 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== T1 — BÀI TOÁN ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 1 · Bài toán</span></div>
+          <div class="crumbs"><span class="on">Track 1</span> · <span>Track 2</span> · <span>Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 1 — <em>Bài toán &amp; dữ liệu</em></h2>
+          <div class="blist">
+            <div class="row">
+              <div class="ix">01</div>
+              <div>
+                <h3>ACR — Absolute Category Rating</h3>
+                <p>Chấm chất lượng tuyệt đối của <code>1 audio</code> đã khử nhiễu, thang điểm 1–5.</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="ix">02</div>
+              <div>
+                <h3>CCR — Comparative Category Rating</h3>
+                <p>So sánh <code>2 audio</code> xem bản nào tốt hơn, thang điểm <code>[−3, +3]</code>.</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="ix">03</div>
+              <div>
+                <h3>Dữ liệu — 9 ngôn ngữ</h3>
+                <p>Listening test của Challenge (ICASSP 2026). <strong>Không có training data chính thức</strong> → dùng
+                  checkpoint baseline URGENT-MOS, chỉ inference.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== 04 — KIẾN TRÚC TRACK 1 ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>URGENT-MOS · chỉ inference</span></div>
+          <div class="crumbs"><span class="on">Track 1</span> · <span>Track 2</span> · <span>Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 1 — <em>URGENT-MOS pipeline</em></h2>
+          <div class="diagram">
+            <svg viewBox="0 0 1500 470" role="img" aria-label="Kiến trúc Track 1">
+              <defs>
+                <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+                  orient="auto-start-reverse">
+                  <path d="M2 1 L8 5 L2 9" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </marker>
+              </defs>
+              <!-- backbone box (frozen SSL) -->
+              <rect x="6" y="186" width="120" height="96" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="66" y="232" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="20"
+                fill="#111">wav</text>
+              <text x="66" y="256" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="13"
+                fill="#8a8a8a">x ∈ ℝᵀ</text>
+
+              <!-- WavLM backbone group -->
+              <rect x="170" y="150" width="640" height="168" fill="none" stroke="#111" stroke-width="2"
+                stroke-dasharray="6 5" />
+              <text x="490" y="142" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="14"
+                letter-spacing="0.14em" fill="#8a8a8a">WAVLM BACKBONE ❄ (CHỈ INFERENCE)</text>
+
+              <rect x="186" y="186" width="150" height="96" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="261" y="228" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="19"
+                fill="#111">CNN ×7</text>
+              <text x="261" y="252" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="12.5"
+                fill="#8a8a8a">sóng → khung</text>
+
+              <rect x="356" y="186" width="180" height="96" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="446" y="228" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="19"
+                fill="#111">Transformer ×24</text>
+              <text x="446" y="252" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="12.5"
+                fill="#8a8a8a">ngữ cảnh toàn câu</text>
+
+              <rect x="556" y="186" width="160" height="96" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="636" y="222" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="18"
+                fill="#111">Trộn lớp αₗ</text>
+              <text x="636" y="246" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="12.5"
+                fill="#8a8a8a">24 lớp → 1</text>
+              <text x="636" y="264" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="12.5"
+                fill="#8a8a8a">+ mean-pool</text>
+
+              <!-- fusion -->
+              <circle cx="900" cy="234" r="42" fill="#fff" stroke="#111" stroke-width="2.2" />
+              <text x="900" y="248" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="38"
+                fill="#111">⊕</text>
+              <text x="900" y="312" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="14"
+                fill="#8a8a8a">fusion · 4 encoder</text>
+
+              <!-- ACR head -->
+              <rect x="1080" y="118" width="410" height="96" fill="#ff3300" />
+              <text x="1104" y="160" font-family="Archivo" font-weight="800" font-size="24" fill="#fff">AMPM →
+                ACR</text>
+              <text x="1104" y="188" font-family="Nunito" font-weight="600" font-size="16" fill="#ffe2d9">điểm tuyệt đối
+                ∈ [1,5]</text>
+              <text x="1466" y="178" text-anchor="end" font-family="Archivo" font-weight="900" font-size="30"
+                fill="#fff">0.662</text>
+
+              <!-- CCR head -->
+              <rect x="1080" y="254" width="410" height="96" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="1104" y="296" font-family="Archivo" font-weight="800" font-size="24" fill="#111">NCPM →
+                CCR</text>
+              <text x="1104" y="324" font-family="Nunito" font-weight="600" font-size="16" fill="#8a8a8a">so sánh 2
+                audio ∈ [−3,+3]</text>
+              <text x="1466" y="314" text-anchor="end" font-family="Archivo" font-weight="900" font-size="30"
+                fill="#ff3300">0.411</text>
+
+              <g stroke="#111" stroke-width="2" fill="none" marker-end="url(#a1)">
+                <line x1="126" y1="234" x2="184" y2="234" />
+                <line x1="336" y1="234" x2="354" y2="234" />
+                <line x1="536" y1="234" x2="554" y2="234" />
+                <line x1="716" y1="234" x2="856" y2="234" />
+                <line x1="942" y1="220" x2="1078" y2="166" />
+                <line x1="942" y1="248" x2="1078" y2="302" />
+              </g>
+            </svg>
+          </div>
+          <div class="legend">
+            <span><i class="sw-line"></i>❄ Backbone đông cứng — chỉ inference</span>
+            <span><i class="sw-red"></i>Head ACR (mạnh nhất)</span>
+            <span><i class="sw-blk"></i>Fusion ⊕ 4 encoder</span>
+          </div>
+        </div>
+        <div class="pagenum">04 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== T1 — PER-LAYER ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 1 · từng layer</span></div>
+          <div class="crumbs"><span class="on">Track 1</span> · <span>Track 2</span> · <span>Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 1 — <em>từng layer làm gì</em></h2>
+          <table class="dt layers">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Layer</th>
+                <th>Vào → Ra</th>
+                <th>Vai trò</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="hash">1</td>
+                <td class="lname">CNN ×7</td>
+                <td>sóng <code>x∈ℝᵀ</code> → khung <code>Z∈ℝᴸˣᵈ</code></td>
+                <td>đổi "sóng vật lý" thành chuỗi gạch âm học ~20ms</td>
+              </tr>
+              <tr>
+                <td class="hash">2</td>
+                <td class="lname">Transformer ×24</td>
+                <td><code>L×d → L×d</code></td>
+                <td>mỗi khung "nhìn" mọi khung khác — trộn ngữ cảnh toàn câu</td>
+              </tr>
+              <tr>
+                <td class="hash">3</td>
+                <td class="lname">Trộn lớp αₗ</td>
+                <td>24 đầu ra lớp → 1</td>
+                <td>αₗ học được chọn tầng hữu ích (âm học ↔ ngữ nghĩa)</td>
+              </tr>
+              <tr>
+                <td class="hash">4</td>
+                <td class="lname">Mean-pool</td>
+                <td><code>L×d → d</code></td>
+                <td>cả câu nén thành 1 vector</td>
+              </tr>
+              <tr>
+                <td class="hash">5</td>
+                <td class="lname">Fusion ⊕</td>
+                <td>4 vector (4 encoder) → <code>f</code></td>
+                <td>4 "đôi tai" khác nhau bù khuyết điểm cho nhau</td>
+              </tr>
+              <tr>
+                <td class="hash">6</td>
+                <td class="lname">AMPM head</td>
+                <td><code>f → ACR ∈ [1,5]</code></td>
+                <td>hồi quy điểm tuyệt đối cho 1 audio</td>
+              </tr>
+              <tr>
+                <td class="hash">7</td>
+                <td class="lname">NCPM head</td>
+                <td><code>f_A, f_B → CCR ∈ [−3,+3]</code></td>
+                <td>điểm so sánh = hiệu 2 nhánh <code>g(f_A) − g(f_B)</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== 07 — DIVIDER TRACK 3 ===== -->
+      <section class="slide divider">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 3</span></div>
+          <div class="crumbs"><span>Track 1</span> · <span>Track 2</span> · <span class="on">Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="sidebar"></div>
+        <div class="big"><em>0</em>3</div>
+        <div class="tname">Codec Synthesis — tương đồng giọng</div>
+        <div class="tdesc">Đo độ giống người nói &amp; chất giọng vùng miền bằng Siamese ECAPA + cosine (zero-shot).
+        </div>
+        <div class="pagenum">07 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== T3 — BÀI TOÁN ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 3 · Bài toán</span></div>
+          <div class="crumbs"><span>Track 1</span> · <span>Track 2</span> · <span class="on">Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 3 — <em>Bài toán</em></h2>
+          <div class="blist">
+            <div class="row">
+              <div class="ix">01</div>
+              <div>
+                <h3>Speaker similarity</h3>
+                <p>Audio tổng hợp có giống <strong>giọng người nói</strong> tham chiếu không (điểm 0–1).</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="ix">02</div>
+              <div>
+                <h3>Accent similarity</h3>
+                <p>Có giống <strong>chất giọng vùng miền</strong> (accent) của tham chiếu không.</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="ix">03</div>
+              <div>
+                <h3>Cách làm — zero-shot</h3>
+                <p>Siamese ECAPA (trọng số chia sẻ) → <code>cosine</code>. Dùng thẳng cosine cho <strong>cả 2
+                    cột</strong>, không cần train.</p>
+              </div>
+            </div>
+          </div>
+          <div class="note">Hạn chế: ECAPA học danh tính người nói, chưa tách riêng accent → hướng mở: 2 head spk/acc.
+          </div>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== 08 — KIẾN TRÚC TRACK 3 ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Siamese ECAPA · zero-shot</span></div>
+          <div class="crumbs"><span>Track 1</span> · <span>Track 2</span> · <span class="on">Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 3 — <em>Siamese ECAPA → cosine</em></h2>
+          <div class="diagram">
+            <svg viewBox="0 0 1500 470" role="img" aria-label="Kiến trúc Track 3">
+              <defs>
+                <marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+                  orient="auto-start-reverse">
+                  <path d="M2 1 L8 5 L2 9" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </marker>
+              </defs>
+              <!-- two inputs -->
+              <rect x="6" y="96" width="150" height="86" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="81" y="135" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="19"
+                fill="#111">wav A</text>
+              <text x="81" y="160" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="13"
+                fill="#8a8a8a">tham chiếu</text>
+              <rect x="6" y="288" width="150" height="86" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="81" y="327" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="19"
+                fill="#111">wav B</text>
+              <text x="81" y="352" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="13"
+                fill="#8a8a8a">tổng hợp</text>
+
+              <!-- shared ECAPA -->
+              <rect x="320" y="120" width="430" height="230" fill="#fff" stroke="#111" stroke-width="2.4" />
+              <text x="535" y="158" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="24"
+                fill="#111">ECAPA-TDNN</text>
+              <text x="535" y="184" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="14"
+                letter-spacing="0.1em" fill="#ff3300">TRỌNG SỐ CHIA SẺ (SIAMESE)</text>
+              <line x1="344" y1="200" x2="726" y2="200" stroke="#ececec" stroke-width="1.5" />
+              <text x="535" y="226" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="15"
+                fill="#333">TDNN → SE-block → attentive pool</text>
+              <text x="535" y="254" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="15"
+                fill="#333">→ Linear 192-D → L2-normalize</text>
+              <text x="535" y="300" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="14"
+                fill="#8a8a8a">→ embedding giọng nói ê ∈ 𝕊¹⁹¹</text>
+
+              <!-- embeddings -->
+              <rect x="830" y="150" width="150" height="70" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="905" y="193" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="20"
+                fill="#111">ê_A</text>
+              <rect x="830" y="296" width="150" height="70" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="905" y="339" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="20"
+                fill="#111">ê_B</text>
+
+              <!-- cosine -->
+              <rect x="1060" y="184" width="190" height="120" fill="#111" />
+              <text x="1155" y="236" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="26"
+                fill="#fff">COSINE</text>
+              <text x="1155" y="266" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="15"
+                fill="#d8d8d8">⟨ê_A, ê_B⟩ ∈ [−1,1]</text>
+
+              <!-- scores -->
+              <rect x="1320" y="160" width="176" height="76" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="1338" y="195" font-family="Archivo" font-weight="800" font-size="20" fill="#111">SPK</text>
+              <text x="1478" y="208" text-anchor="end" font-family="Nunito" font-weight="700" font-size="22"
+                fill="#ff3300">0.451</text>
+              <rect x="1320" y="252" width="176" height="76" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="1338" y="287" font-family="Archivo" font-weight="800" font-size="20" fill="#111">ACC</text>
+              <text x="1478" y="300" text-anchor="end" font-family="Nunito" font-weight="700" font-size="22"
+                fill="#ff3300">0.440</text>
+
+              <g stroke="#111" stroke-width="2" fill="none" marker-end="url(#a3)">
+                <line x1="156" y1="139" x2="318" y2="180" />
+                <line x1="156" y1="331" x2="318" y2="290" />
+                <line x1="750" y1="190" x2="828" y2="185" />
+                <line x1="750" y1="280" x2="828" y2="331" />
+                <line x1="980" y1="185" x2="1058" y2="220" />
+                <line x1="980" y1="331" x2="1058" y2="268" />
+                <line x1="1250" y1="220" x2="1318" y2="198" />
+                <line x1="1250" y1="268" x2="1318" y2="290" />
+              </g>
+            </svg>
+          </div>
+          <div class="legend">
+            <span><i class="sw-red"></i>Trọng số chia sẻ (Siamese)</span>
+            <span><i class="sw-blk"></i>Cosine = độ giống hướng</span>
+            <span><i class="sw-line"></i>Zero-shot: spk = acc = cosine</span>
+          </div>
+        </div>
+        <div class="pagenum">08 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== T3 — PER-LAYER ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 3 · từng layer</span></div>
+          <div class="crumbs"><span>Track 1</span> · <span>Track 2</span> · <span class="on">Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 3 — <em>từng layer làm gì</em></h2>
+          <table class="dt layers">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Layer</th>
+                <th>Vào → Ra</th>
+                <th>Vai trò</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="hash">1</td>
+                <td class="lname">TDNN (dilated Conv1D)</td>
+                <td>wav → chuỗi khung</td>
+                <td>conv giãn nở — mỗi khung gom ngữ cảnh lân cận</td>
+              </tr>
+              <tr>
+                <td class="hash">2</td>
+                <td class="lname">SE-block</td>
+                <td>khung → khung (trọng số kênh)</td>
+                <td>"chú ý theo kênh": khuếch đại kênh quan trọng</td>
+              </tr>
+              <tr>
+                <td class="hash">3</td>
+                <td class="lname">Attentive stat-pooling</td>
+                <td>chuỗi khung → 1 vector</td>
+                <td>gộp thời gian: trung bình + lệch chuẩn có attention</td>
+              </tr>
+              <tr>
+                <td class="hash">4</td>
+                <td class="lname">Linear → 192-D</td>
+                <td>pooled → <code>e∈ℝ¹⁹²</code></td>
+                <td>nén thành danh tính giọng (speaker embedding)</td>
+              </tr>
+              <tr>
+                <td class="hash">5</td>
+                <td class="lname">L2-normalize</td>
+                <td>192-D → 192-D (độ dài 1)</td>
+                <td>đưa lên mặt cầu đơn vị → tích vô hướng = cosine</td>
+              </tr>
+              <tr>
+                <td class="hash">6</td>
+                <td class="lname">Cosine</td>
+                <td>2 vector → 1 số ∈ [−1,1]</td>
+                <td>độ giống về hướng = độ giống giọng</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== 05 — DIVIDER TRACK 2 ===== -->
+      <section class="slide divider">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 2 ⭐</span></div>
+          <div class="crumbs"><span>Track 1</span> · <span class="on">Track 2</span> · <span>Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="sidebar"></div>
+        <div class="big"><em>0</em>2</div>
+        <div class="tname">Emotional TTS — trọng tâm dự án</div>
+        <div class="tdesc">Chấm 6 cột: QMOS chất lượng + EMOS/CAT/VAL/ARO/DOM cảm xúc. Hệ exp18 fusion + fine-tune.
+        </div>
+        <div class="pagenum">05 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== T2 — BÀI TOÁN / 6 CỘT ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 2 · 6 cột</span></div>
+          <div class="crumbs"><span>Track 1</span> · <span class="on">Track 2</span> · <span>Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 2 — <em>6 cột &amp; cách chấm</em></h2>
+          <div class="blist">
+            <div class="row">
+              <div class="ix">01</div>
+              <div>
+                <h3>QMOS — chất lượng</h3>
+                <p>Điểm chất lượng tổng thể của giọng tổng hợp (quality MOS).</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="ix">02</div>
+              <div>
+                <h3>EMOS — mức khớp cảm xúc</h3>
+                <p>Giọng có truyền <strong>đúng cảm xúc target</strong> hay không (emotion MOS).</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="ix">03</div>
+              <div>
+                <h3>CAT — phân loại cảm xúc</h3>
+                <p>5 lớp (angry · happy · neutral · sad · surprise) — chấm bằng <code>CAT-ERR</code> (càng thấp càng
+                  tốt).</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="ix">04</div>
+              <div>
+                <h3>VAD — 3 trục cảm xúc liên tục</h3>
+                <p>Valence (tích cực↔tiêu cực) · Arousal (kích thích) · Dominance (chi phối).</p>
+              </div>
+            </div>
+          </div>
+          <div class="note">Metric: SRCC từng cột độc lập · Dữ liệu: BTC + ESD + DailyTalk (~12K mẫu).</div>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== 06 — KIẾN TRÚC TRACK 2 ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Fusion + Fine-tune · exp18</span></div>
+          <div class="crumbs"><span>Track 1</span> · <span class="on">Track 2</span> · <span>Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 2 — <em>Pipeline hợp nhất</em></h2>
+          <div class="diagram">
+            <svg viewBox="0 0 1500 560" role="img" aria-label="Kiến trúc Track 2">
+              <defs>
+                <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+                  orient="auto-start-reverse">
+                  <path d="M2 1 L8 5 L2 9" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </marker>
+              </defs>
+              <rect x="6" y="232" width="150" height="96" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="81" y="276" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="20"
+                fill="#111">wav</text>
+              <text x="81" y="300" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="14"
+                fill="#8a8a8a">+ target</text>
+
+              <rect x="320" y="104" width="320" height="116" fill="#ff3300" />
+              <text x="480" y="150" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="25"
+                fill="#fff">audeering 🔥</text>
+              <text x="480" y="182" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="17"
+                fill="#ffe2d9">wav2vec2 · emb + VAD = 1027</text>
+              <text x="480" y="205" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="13"
+                letter-spacing="0.12em" fill="#ffd0c2">FINE-TUNE · 6 LỚP TRÊN</text>
+
+              <rect x="320" y="338" width="320" height="134" fill="#ff3300" />
+              <text x="480" y="386" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="25"
+                fill="#fff">WavLM top-6 🔥</text>
+              <text x="480" y="418" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="17"
+                fill="#ffe2d9">warm-start SAILER · LR 1e-5</text>
+              <text x="480" y="442" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="13"
+                letter-spacing="0.1em" fill="#ffd0c2">FINE-TUNE · 6 LỚP TRÊN</text>
+
+              <circle cx="760" cy="288" r="38" fill="#fff" stroke="#111" stroke-width="2.2" />
+              <text x="760" y="303" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="36"
+                fill="#111">⊕</text>
+
+              <rect x="900" y="223" width="240" height="130" fill="#111" />
+              <text x="1020" y="276" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="30"
+                fill="#fff">TRUNK</text>
+              <text x="1020" y="308" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="16"
+                fill="#d8d8d8">concat 2051 → 512</text>
+              <text x="1020" y="330" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="16"
+                fill="#d8d8d8">MLP × 2</text>
+
+              <g font-family="Archivo" font-weight="800">
+                <rect x="1280" y="6" width="216" height="76" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="1300" y="52" font-size="23" fill="#111">QMOS</text>
+                <text x="1476" y="52" text-anchor="end" font-family="Nunito" font-weight="700" font-size="22"
+                  fill="#ff3300">0.548</text>
+                <rect x="1280" y="98" width="216" height="76" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="1300" y="144" font-size="23" fill="#111">EMOS</text>
+                <text x="1476" y="144" text-anchor="end" font-family="Nunito" font-weight="700" font-size="22"
+                  fill="#ff3300">0.811</text>
+                <rect x="1280" y="190" width="216" height="76" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="1300" y="236" font-size="23" fill="#111">CAT</text>
+                <text x="1476" y="236" text-anchor="end" font-family="Nunito" font-weight="700" font-size="22"
+                  fill="#ff3300">.133</text>
+                <rect x="1280" y="282" width="216" height="76" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="1300" y="328" font-size="23" fill="#111">VAL</text>
+                <text x="1476" y="328" text-anchor="end" font-family="Nunito" font-weight="700" font-size="22"
+                  fill="#ff3300">0.659</text>
+                <rect x="1280" y="374" width="216" height="76" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="1300" y="420" font-size="23" fill="#111">ARO</text>
+                <text x="1476" y="420" text-anchor="end" font-family="Nunito" font-weight="700" font-size="22"
+                  fill="#ff3300">0.793</text>
+                <rect x="1280" y="466" width="216" height="76" fill="#fff" stroke="#111" stroke-width="2" />
+                <text x="1300" y="512" font-size="23" fill="#111">DOM</text>
+                <text x="1476" y="512" text-anchor="end" font-family="Nunito" font-weight="700" font-size="22"
+                  fill="#ff3300">0.751</text>
+              </g>
+
+              <g stroke="#111" stroke-width="2" fill="none" marker-end="url(#a2)">
+                <line x1="156" y1="274" x2="318" y2="162" />
+                <line x1="156" y1="286" x2="318" y2="400" />
+                <line x1="640" y1="162" x2="724" y2="274" />
+                <line x1="640" y1="405" x2="724" y2="304" />
+                <line x1="798" y1="288" x2="898" y2="288" />
+                <line x1="1140" y1="288" x2="1278" y2="44" />
+                <line x1="1140" y1="288" x2="1278" y2="136" />
+                <line x1="1140" y1="288" x2="1278" y2="228" />
+                <line x1="1140" y1="288" x2="1278" y2="320" />
+                <line x1="1140" y1="288" x2="1278" y2="412" />
+                <line x1="1140" y1="288" x2="1278" y2="504" />
+              </g>
+            </svg>
+          </div>
+          <div class="legend">
+            <span><i class="sw-red"></i>🔥 Cả 2 encoder fine-tune 6 lớp trên</span>
+            <span><i class="sw-line"></i>❄ UTMOS neo QMOS (frozen)</span>
+            <span><i class="sw-blk"></i>⊕ → Trunk chung → 6 cột</span>
+          </div>
+        </div>
+        <div class="pagenum">06 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== T2 — PER-LAYER ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 2 · từng layer · exp18</span></div>
+          <div class="crumbs"><span>Track 1</span> · <span class="on">Track 2</span> · <span>Track 3</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 2 — <em>từng layer làm gì</em></h2>
+          <table class="dt layers">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Layer</th>
+                <th>Vào → Ra</th>
+                <th>Train?</th>
+                <th>Vai trò</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="hash">E</td>
+                <td class="lname">audeering wav2vec2 🔥</td>
+                <td>wav → emb 1024 + VAD 3 = <strong>1027</strong></td>
+                <td>🔥 top-6 · LR 1e-5</td>
+                <td>chuyên gia VAD (MSP-Podcast) — fine-tune 6 lớp trên cho hợp domain</td>
+              </tr>
+              <tr>
+                <td class="hash">Q</td>
+                <td class="lname">UTMOS ❄ ⚓</td>
+                <td>wav → <strong>1</strong> điểm MOS</td>
+                <td>❄ cache</td>
+                <td>neo chất lượng cho head QMOS</td>
+              </tr>
+              <tr>
+                <td class="hash">W1</td>
+                <td class="lname">WavLM CNN×7 + 18 lớp dưới</td>
+                <td>wav → 399×1024</td>
+                <td>❄</td>
+                <td>đặc trưng âm học phổ quát — không phá</td>
+              </tr>
+              <tr>
+                <td class="hash">W2</td>
+                <td class="lname">WavLM 6 lớp trên 🔥</td>
+                <td>→ mean-pool <strong>1024</strong></td>
+                <td>🔥 LR 1e-5</td>
+                <td>tầng cảm xúc — fine-tune warm-start SAILER</td>
+              </tr>
+              <tr>
+                <td class="hash">T</td>
+                <td class="lname">Concat → TRUNK MLP×2</td>
+                <td>2051 → <strong>512</strong></td>
+                <td>✅</td>
+                <td>não chung — nén fusion thành biểu diễn đa nhiệm</td>
+              </tr>
+              <tr>
+                <td class="hash">H</td>
+                <td class="lname">6 head</td>
+                <td>512 → ra</td>
+                <td>✅</td>
+                <td>QMOS+UTMOS · EMOS+one-hot · CAT · VAD</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== LEADERBOARD TRACK 2 (tiến triển) ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Track 2 · Leaderboard (DEV)</span></div>
+          <div class="crumbs"><span class="on">BEST-PER-COLUMN</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Track 2 — <em>tiến triển từng cột</em></h2>
+          <table class="dt lb">
+            <thead>
+              <tr>
+                <th style="text-align:left">Ngày</th>
+                <th>QMOS ↑</th>
+                <th>EMOS ↑</th>
+                <th>CAT err ↓</th>
+                <th>VAL ↑</th>
+                <th>ARO ↑</th>
+                <th>DOM ↑</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="day">3/6</td>
+                <td>0.414</td>
+                <td>0.194</td>
+                <td>0.193</td>
+                <td class="dim">—</td>
+                <td class="dim">—</td>
+                <td class="dim">—</td>
+              </tr>
+              <tr>
+                <td class="day">4/6</td>
+                <td>0.548</td>
+                <td>0.795</td>
+                <td>0.145</td>
+                <td>0.581</td>
+                <td>0.754</td>
+                <td>0.706</td>
+              </tr>
+              <tr>
+                <td class="day">5/6</td>
+                <td>0.548</td>
+                <td>0.811</td>
+                <td>0.133</td>
+                <td>0.659</td>
+                <td>0.793</td>
+                <td>0.751</td>
+              </tr>
+              <tr>
+                <td class="day">10/6</td>
+                <td><em>0.6296</em> 🚀</td>
+                <td>0.8116</td>
+                <td>0.1331</td>
+                <td>0.6605</td>
+                <td><em>0.7978</em> 🚀</td>
+                <td>0.7539</td>
+              </tr>
+              <tr>
+                <td class="day">16/6</td>
+                <td><em>0.6296</em></td>
+                <td><em>0.8144</em> 🚀</td>
+                <td>0.1331</td>
+                <td>0.6605</td>
+                <td>0.7978</td>
+                <td>0.7539</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="note">Đã nộp (exp_mix 9/6): QMOS 0.548 · EMOS 0.811 · CAT .133 · VAD 0.659/0.793/0.751. Best mới
+            nhất (gộp exp13 + exp15 + exp18) <strong>chưa nộp đủ trong 1 bản</strong>.</div>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== 09 — KẾT QUẢ TỔNG ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Kết quả</span></div>
+          <div class="crumbs"><span class="on">LEADERBOARD</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Kết quả <em>3 track</em> (UTT-SRCC)</h2>
+          <table class="dt">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Track</th>
+                <th>Các cột &amp; điểm</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="tnum">1</td>
+                <td class="tn">Speech Enhancement</td>
+                <td class="score">ACR <em>0.662</em> &nbsp;·&nbsp; CCR 0.411</td>
+              </tr>
+              <tr>
+                <td class="tnum">2</td>
+                <td class="tn">Emotional TTS ⭐</td>
+                <td class="score">QMOS 0.548 · EMOS <em>0.811</em> · CAT .133 · VAD 0.659/0.793/0.751</td>
+              </tr>
+              <tr>
+                <td class="tnum">3</td>
+                <td class="tn">Codec Synthesis</td>
+                <td class="score">Speaker <em>0.451</em> &nbsp;·&nbsp; Accent 0.440</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagenum">09 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== TRAINING DETAILS ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Training details</span></div>
+          <div class="crumbs"><span class="on">TRACK 2 · FINE-TUNE</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Cách huấn luyện — <em>chỉ Track 2 train</em></h2>
+          <table class="dt spec">
+            <tbody>
+              <tr>
+                <td class="k">Backbone 🔥</td>
+                <td class="v">WavLM-large — mở băng <strong>6 lớp trên</strong> (top-6), warm-start từ SAILER · LR
+                  <code>1e-5</code>
+                </td>
+              </tr>
+              <tr>
+                <td class="k">Encoder ❄</td>
+                <td class="v">audeering + UTMOS <strong>đóng băng</strong>, cache sẵn output — không train lại</td>
+              </tr>
+              <tr>
+                <td class="k">Trunk + 6 head</td>
+                <td class="v">MLP×2 + 6 head · LR <code>1e-3</code> · optimizer AdamW</td>
+              </tr>
+              <tr>
+                <td class="k">Loss</td>
+                <td class="v">MSE từng cột + <strong>uncertainty weighting</strong> (Kendall 2018) tự cân multi-task,
+                  khỏi dò tay λ</td>
+              </tr>
+              <tr>
+                <td class="k">Dữ liệu · phần cứng</td>
+                <td class="v">BTC + ESD + DailyTalk (~12K mẫu) · Kaggle <strong>T4 16GB</strong> — chỉ top-6 để vừa bộ
+                  nhớ</td>
+              </tr>
+              <tr>
+                <td class="k">Track 1 &amp; 3</td>
+                <td class="v">Track 1 <strong>chỉ inference</strong> (không có train data) · Track 3
+                  <strong>zero-shot</strong>
+                  cosine
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== DEPLOY / TRITON SERVING ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Triển khai · Serving</span></div>
+          <div class="crumbs"><span class="on">TRITON · OFFLINE 1 GPU</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame">
+          <h2>Đóng gói phục vụ — <em>Triton + Gateway</em></h2>
+          <div class="diagram">
+            <svg viewBox="0 0 1500 470" role="img" aria-label="Serving Triton">
+              <defs>
+                <marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7"
+                  orient="auto-start-reverse">
+                  <path d="M2 1 L8 5 L2 9" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </marker>
+              </defs>
+              <!-- client -->
+              <rect x="6" y="180" width="180" height="100" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="96" y="226" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="22"
+                fill="#111">Client</text>
+              <text x="96" y="252" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="14"
+                fill="#8a8a8a">POST .wav</text>
+
+              <!-- gateway -->
+              <rect x="270" y="160" width="270" height="140" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="405" y="206" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="22"
+                fill="#111">FastAPI Gateway</text>
+              <text x="405" y="236" text-anchor="middle" font-family="Nunito" font-weight="700" font-size="17"
+                fill="#ff3300">:18080</text>
+              <text x="405" y="266" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="15"
+                fill="#8a8a8a">REST: wav → JSON điểm</text>
+
+              <!-- locust -->
+              <rect x="270" y="330" width="270" height="80" fill="#fff" stroke="#111" stroke-width="2"
+                stroke-dasharray="6 5" />
+              <text x="405" y="366" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="18"
+                fill="#111">Locust loadtest</text>
+              <text x="405" y="392" text-anchor="middle" font-family="Nunito" font-weight="600" font-size="14"
+                fill="#8a8a8a">đo throughput / latency</text>
+
+              <!-- triton container -->
+              <rect x="610" y="60" width="884" height="350" fill="none" stroke="#111" stroke-width="2.4" />
+              <text x="634" y="100" font-family="Archivo" font-weight="800" font-size="22" fill="#111">Triton Inference
+                Server <tspan fill="#ff3300">:8000</tspan></text>
+              <text x="634" y="128" font-family="Nunito" font-weight="700" font-size="15" fill="#8a8a8a">⚡ Dynamic
+                batching · pad + attention_mask · max_batch 8</text>
+
+              <rect x="636" y="150" width="832" height="68" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="656" y="184" font-family="Archivo" font-weight="800" font-size="20" fill="#111">track1_acr</text>
+              <text x="656" y="206" font-family="Nunito" font-weight="600" font-size="15" fill="#8a8a8a">URGENT-MOS (env
+                riêng)</text>
+              <text x="1448" y="192" text-anchor="end" font-family="Nunito" font-weight="700" font-size="18"
+                fill="#111">ACR + CCR</text>
+
+              <!-- track2 = red (model train) -->
+              <rect x="636" y="234" width="832" height="68" fill="#ff3300" />
+              <text x="656" y="268" font-family="Archivo" font-weight="800" font-size="20"
+                fill="#fff">track2_emotion</text>
+              <text x="656" y="290" font-family="Nunito" font-weight="600" font-size="15" fill="#ffe2d9">fusion ❄ +
+                WavLM
+                ft 🔥</text>
+              <text x="1448" y="276" text-anchor="end" font-family="Nunito" font-weight="700" font-size="18"
+                fill="#fff">6 cột cảm xúc</text>
+
+              <rect x="636" y="318" width="832" height="68" fill="#fff" stroke="#111" stroke-width="2" />
+              <text x="656" y="352" font-family="Archivo" font-weight="800" font-size="20" fill="#111">track3_sim</text>
+              <text x="656" y="374" font-family="Nunito" font-weight="600" font-size="15" fill="#8a8a8a">ECAPA-TDNN
+                siamese</text>
+              <text x="1448" y="360" text-anchor="end" font-family="Nunito" font-weight="700" font-size="18"
+                fill="#111">speaker / accent</text>
+
+              <g stroke="#111" stroke-width="2" fill="none" marker-end="url(#ad)">
+                <line x1="186" y1="230" x2="268" y2="230" />
+                <line x1="540" y1="230" x2="608" y2="230" />
+                <line x1="405" y1="330" x2="405" y2="302" />
+              </g>
+            </svg>
+          </div>
+          <div class="legend">
+            <span><i class="sw-red"></i>track2 = model có fine-tune</span>
+            <span><i class="sw-line"></i>track1 env cô lập (conda-pack)</span>
+            <span><i class="sw-blk"></i>Gateway REST → 3 model 1 GPU</span>
+          </div>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+      <!-- ===== DEMO (video) ===== -->
+      <section class="slide">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>Demo trực tiếp</span></div>
+          <div class="crumbs"><span class="on">VIDEO</span></div>
+        </div>
+        <div class="rule"></div>
+        <div class="frame" style="display:flex;flex-direction:column;">
+          <h2>Demo — <em>hệ thống chấm điểm</em></h2>
+          <div style="flex:1;display:flex;align-items:center;justify-content:center;margin-top:28px;min-height:0;">
+            <video src="Demo.mp4" controls playsinline preload="metadata"
+              style="max-width:100%;max-height:100%;border:3px solid var(--ink);display:block;background:#000;"></video>
+          </div>
+        </div>
+        <div class="pagenum"></div>
+        <div class="navhint">← → DI CHUYỂN · BẤM ▶ ĐỂ PHÁT</div>
+      </section>
+
+      <!-- ===== 10 — CLOSING ===== -->
+      <section class="slide closing">
+        <div class="topbar">
+          <div class="l"><span class="redbar"></span><span>VoiceMOS Challenge 2026</span></div>
+          <div class="crumbs"><span class="on">CẢM ƠN</span></div>
+        </div>
+        <div class="rule"></div>
+        <svg class="geo" viewBox="0 0 420 420" aria-hidden="true">
+          <rect x="40" y="40" width="200" height="200" fill="#ff3300" />
+          <circle cx="290" cy="280" r="120" fill="none" stroke="#111" stroke-width="2.5" />
+        </svg>
+        <h1>Xin <em>cảm ơn</em>.</h1>
+        <div class="sub">Hỏi &amp; đáp — tranminhtoan140601@gmail.com · VFS · VoiceMOS Challenge 2026.</div>
+        <div class="pagenum">10 / 10</div>
+        <div class="navhint">← → DI CHUYỂN · F TOÀN MÀN HÌNH</div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    /* fixed-stage scaler + điều hướng */
+    class Deck {
+      constructor() {
+        this.slides = [...document.querySelectorAll('.slide')];
+        this.i = 0;
+        this.stage = document.getElementById('deckStage');
+        this.scale();
+        addEventListener('resize', () => this.scale());
+        addEventListener('keydown', e => {
+          if (['ArrowRight', 'ArrowDown', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); this.go(1); }
+          if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); this.go(-1); }
+          if (e.key === 'Home') this.show(0);
+          if (e.key === 'End') this.show(this.slides.length - 1);
+          if (e.key === 'f' || e.key === 'F') {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+          }
+        });
+        let x0 = 0;
+        addEventListener('touchstart', e => x0 = e.touches[0].clientX, { passive: true });
+        addEventListener('touchend', e => {
+          const d = e.changedTouches[0].clientX - x0;
+          if (Math.abs(d) > 50) this.go(d < 0 ? 1 : -1);
+        });
+        // tự đánh số trang: NN / TỔNG (chèn slide không cần sửa tay)
+        const tot = String(this.slides.length).padStart(2, '0');
+        this.slides.forEach((s, k) => {
+          const p = s.querySelector('.pagenum');
+          if (p) p.textContent = String(k + 1).padStart(2, '0') + ' / ' + tot;
+        });
+        this.show(0);
+      }
+      scale() {
+        const f = Math.min(innerWidth / 1920, innerHeight / 1080);
+        const x = (innerWidth - 1920 * f) / 2, y = (innerHeight - 1080 * f) / 2;
+        this.stage.style.transform = `translate(${x}px, ${y}px) scale(${f})`;
+      }
+      go(d) { this.show(this.i + d); }
+      show(n) {
+        this.i = Math.max(0, Math.min(n, this.slides.length - 1));
+        document.querySelectorAll('video').forEach(v => v.pause()); // dừng video khi đổi slide
+        this.slides.forEach((s, k) => {
+          s.classList.toggle('active', k === this.i);
+          s.classList.toggle('visible', k === this.i);
+        });
+      }
+    }
+    new Deck();
+  </script>
+</body>
+
+</html>
