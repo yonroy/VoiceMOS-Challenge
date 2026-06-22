@@ -10,7 +10,7 @@
 # Track 1 cài đúng đồ của nó, Track 2/3 giữ nguyên image, không đụng nhau.
 #
 # CHẠY TRÊN SERVER (dùng conda `base` có sẵn — dấu nhắc đang là `(base)`):
-#   cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service/track1_env
+#   cd /userdata/<user>/VoiceMos/VoiceMOS-Challenge/triton_service/track1_env
 #   bash build_track1_env.sh
 #
 # Sản phẩm: ../model_repository/track1_acr/track1_env.tar.gz  (~1.5–2.5GB, .gitignore bỏ qua)

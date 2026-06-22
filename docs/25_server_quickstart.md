@@ -1,14 +1,14 @@
 # ⚡ Quickstart server — cầm tay khi lên Triton (1 trang)
 
 > Bản tóm tắt copy-paste. Chi tiết + xử lý lỗi xem [24_server_deploy_guide.md](24_server_deploy_guide.md).
-> Thay `<ip-server>` bằng IP thật. Server: `/userdata/nhandt23/VoiceMos/VoiceMOS-Challenge` · GPU 12GB.
+> Thay `<ip-server>` bằng IP thật. Server: `/userdata/<user>/VoiceMos/VoiceMOS-Challenge` · GPU 12GB.
 
 ---
 
 ## 0️⃣ Lên server + CLONE code (lần đầu — server chưa có repo)
 ```bash
-ssh nhandt23@<ip-server>
-mkdir -p /userdata/nhandt23/VoiceMos && cd /userdata/nhandt23/VoiceMos
+ssh <user>@<ip-server>
+mkdir -p /userdata/<user>/VoiceMos && cd /userdata/<user>/VoiceMos
 
 # Clone repo (public → chạy thẳng; private → xem ghi chú dưới)
 git clone https://github.com/yonroy/VoiceMOS-Challenge.git
@@ -45,14 +45,14 @@ bash run_server.sh              # lần đầu 5–15 phút (build + tải model
 
 ## 3️⃣ Terminal MỚI — kiểm tra sống
 ```bash
-ssh nhandt23@<ip-server>
+ssh <user>@<ip-server>
 curl http://localhost:8080/health                 # {"status":"ok"}
 nvidia-smi                                         # VRAM dùng ~5-7GB
 ```
 
 ## 4️⃣ Test điểm — Track 2 TRƯỚC (xác nhận pipeline)
 ```bash
-cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge
+cd /userdata/<user>/VoiceMos/VoiceMOS-Challenge
 WAV=triton_service/loadtest/samples/$(ls triton_service/loadtest/samples/ | head -1)
 
 curl -s -F "file=@$WAV" -F "target_emotion=happy" localhost:8080/track2 | python3 -m json.tool
@@ -79,7 +79,7 @@ locust -f locustfile.py --host http://localhost:8080 \
 
 ## ⏹️ Dừng
 ```bash
-cd /userdata/nhandt23/VoiceMos/VoiceMOS-Challenge/triton_service && docker compose down
+cd /userdata/<user>/VoiceMos/VoiceMOS-Challenge/triton_service && docker compose down
 ```
 
 ---

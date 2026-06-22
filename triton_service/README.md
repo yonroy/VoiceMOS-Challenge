@@ -56,7 +56,7 @@ triton_service/
 
 ```bash
 # 0) Vào thư mục triton_service/
-cd /home/nhandt23/project/VoiceMOS/triton_service
+cd /home/<user>/project/VoiceMOS/triton_service
 
 # 1) Đặt HF Token (nếu checkpoint private)
 export HF_TOKEN=hf_xxx
