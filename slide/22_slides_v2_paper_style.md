@@ -917,6 +917,37 @@ $$L = \sum_{t}\, e^{-s_t} L_t + s_t \qquad (s_t = \log\sigma_t^2,\ \text{5 tham 
 
 ---
 
+## Triển khai thực tế — Triton Inference Server (3 track)
+
+Ngoài độ chính xác, hệ thống được **đóng gói phục vụ (serving)** chạy offline trên 1 GPU:
+
+```
+client --(POST .wav)--> FastAPI gateway :18080 --(tritonclient)--> Triton :8000
+                                                   ├ track2_emotion  (6 cột cảm xúc)
+                                                   ├ track1_acr      (URGENT-MOS, env riêng)
+                                                   └ track3_sim      (ECAPA speaker/accent)
+```
+
+- **Dynamic batching thật:** `max_batch_size=8` + pad + `attention_mask` → gộp nhiều audio khác độ dài vào 1 lượt WavLM forward.
+- **Gateway REST:** `/track1 /track2 /track3 /health` (upload audio → JSON điểm).
+- **Cô lập môi trường:** Track 1 (Qwen3-Omni, cần `transformers` mới) chạy env `conda-pack` riêng → không xung đột pin `transformers<4.50` của Track 2.
+- **Loadtest Locust** + so **batch 1 vs 8** để đo throughput/latency.
+
+> Trạng thái: Track 2 + Track 3 **READY**; cache model ở named volume (tải 1 lần). → khẳng định góc **C5 (hiệu quả/triển khai được)**.
+
+---
+
+## Demo & thử trực tiếp
+
+- **UI demo (Gradio, 3 tab — kéo-thả audio → xem điểm 6 cột):**
+  **huggingface.co/spaces/tranminhtoan140601/voicemos2026-demo**
+- **API service REST 3 track** (HF Space, free CPU): `voicemos2026-api` (Swagger `/docs`)
+- **UI Triton 4 tab** (Track 1/2/3 + chấm hàng loạt) — gọi gateway nội bộ `:18080`
+
+> Demo chạy nhanh trên Kaggle T4; API/serving chứng minh hệ **chạy offline, không tốn API trả phí**.
+
+---
+
 <!-- _header: '' -->
 <!-- _footer: '' -->
 
@@ -924,6 +955,7 @@ $$L = \sum_{t}\, e^{-s_t} L_t + s_t \qquad (s_t = \log\sigma_t^2,\ \text{5 tham 
 
 - **CodaBench (competition):** codabench.org/competitions/16419
 - **Baseline chính thức:** github.com/voicemos-challenge/vmc2026-baselines
+- **Demo UI (thử trực tiếp):** huggingface.co/spaces/tranminhtoan140601/voicemos2026-demo
 - **Hugging Face (`tranminhtoan140601`):** checkpoint · demo Space `voicemos2026-demo` · API `voicemos2026-api`
 - Website: sites.google.com/view/voicemos-challenge
 

@@ -1,6 +1,6 @@
 # 18 — Lịch sử Leaderboard qua các ngày
 
-> Bảng theo dõi điểm leaderboard (DEV, CodaBench) theo thời gian. Cập nhật ngày: 10/6/2026.
+> Bảng theo dõi điểm leaderboard (DEV, CodaBench) theo thời gian. Cập nhật ngày: 16/6/2026.
 > Metric chính = **UTT-SRCC** (càng cao càng tốt), riêng **CAT err** càng thấp càng tốt.
 > Nguồn số liệu chuẩn: `04_experiments_log.md` + `12_system_description.md`. Khi có bản nộp mới → thêm 1 hàng.
 
@@ -35,6 +35,10 @@
 - EMOS/CAT/VAL/DOM best vẫn của exp08/exp08b (exp15 thua sát nút 3 cột này).
 
 > ⚠️ Best-per-column hiện **chưa gom đủ trong 1 bản nộp**. Bản trộn thế hệ mới = QMOS←exp13 + ARO←exp15 + EMOS/CAT/VAL/DOM←exp08 — **chưa nộp**.
+
+| 16/6 | **0.6296** | **0.8144** 🚀 | **0.1331** | **0.6605** | **0.7978** | **0.7539** |
+
+**Δ 10/6 → 16/6 (exp18 cross-attention):** EMOS 0.8116 → **0.8144** (+0.0028, kỷ lục cột — cross-attn frozen WavLM⟷audeering, chỉ train ~1.7M tham số). Các cột exp18 còn lại (CAT 0.1351 · VAL 0.6403 · ARO 0.7917 · DOM 0.7426) **KHÔNG vượt** best cũ → giữ nguyên. Bản trộn best-per-column mới: **EMOS←exp18** + QMOS←exp13 + ARO←exp15 + CAT/VAL/DOM←exp08 — **chưa nộp**.
 
 ---
 

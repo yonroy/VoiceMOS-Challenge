@@ -3,7 +3,7 @@
 > **Mục đích:** nhìn 1 phát biết **đã làm được gì** trong từng exp, cái nào đã nộp/có điểm, cái nào mới code.
 > Đây là **bảng trạng thái nhanh** — chi tiết config/kết quả đầy đủ vẫn ở [04_experiments_log.md](04_experiments_log.md).
 >
-> Cập nhật ngày: 10/6/2026 (Phiên 21 — exp13 NỘP, QMOS ~0.63 🏆).
+> Cập nhật ngày: 18/6/2026 (Phiên 29 — exp20 audio-LLM NỘP khỏe nhưng không vượt; exp21 concat thô NỘP SẬP; cả 2 = ablation).
 
 ---
 
@@ -33,6 +33,11 @@
 | **exp_mix** | TRỘN CỘT: QMOS←exp07 + 5 cảm xúc←exp08 (ghép answer.txt) | QMOS 0.548 · EMOS 0.811 · CAT 0.133 · VAD 0.659/0.793/0.751 | bản nộp mạnh nhất 9/6; nay là **fallback** (QMOS bị exp13 vượt) |
 | **exp13** | **FINE-TUNE thẳng UTMOS** trên nhãn qMOS thật (NỘP 10/6) | **QMOS 0.6296 🏆** | 🏆 **QMOS tốt nhất** — phá trần 0.548 (+0.082) |
 | **exp15** | **WavLM ft + MAMBA head** thay mean-pool (NỘP 10/6, QMOS←ckpt exp13) | QMOS 0.6296 · EMOS 0.8070 · CAT 0.1349 · VAL 0.6545 · **ARO 0.7978 🏆** · DOM 0.7506 | 🏆 **ARO tốt nhất**; Mamba ≈ mean-pool ở 4 cột còn lại → ablation cho paper |
+| **exp18** | **CROSS-ATTENTION FUSION** WavLM(SAILER) ⟷ audeering (frozen + cache, chỉ train fusion+heads ~1.7M) (NỘP 16/6) | **EMOS 0.8144 🏆** · CAT 0.1351 · VAL 0.6403 · ARO 0.7917 · DOM 0.7426 | 🏆 **EMOS tốt nhất**; frozen ≈ exp08 fine-tune mà rẻ hơn → góc "hiệu quả" (C5). VAL/DOM/CAT không vượt best |
+| **exp18+rank** | exp18 + **ranking loss** `LAMBDA_RANK=0.3` (pairwise, train theo SRCC) (NỘP 17/6) | EMOS 0.8079 · CAT 0.1357 · VAL 0.6426 · ARO 0.7947 · DOM 0.7522 | so λ=0: **VAD đều nhích** (DOM +0.0096), EMOS tụt nhẹ → ranking giúp cột dư địa, hại cột bão hoà. Chưa vượt best (DOM sát 0.7539). Ablation "MSE vs SRCC" cho paper |
+| _exp18+Mamba_ | exp18 + Mamba head giữa cross-attn/pool (cờ `USE_MAMBA`) (NỘP 17/6, **ablation âm**) | EMOS 0.8144(hoà) · CAT 0.1359 · VAL 0.6420 · ARO 0.7887 · DOM 0.7453 | **KHÔNG cải thiện** (Mamba ≈ pool, đúng vết exp15) → **đã GỠ** khỏi exp18; giữ làm ablation âm (củng cố C5) |
+| **exp20** | exp18 (cross-attn) + **AUDIO-LLM Qwen2-Audio** pooled (chuẩn hoá+chiếu 256) concat (NỘP 18/6) | EMOS 0.8032 · CAT 0.1405 · VAL 0.6399 · ARO 0.7935 · DOM 0.7498 | **KHỎE, không sập** nhưng ≈ exp18, **không vượt best** → audio-LLM pooled trùng tín hiệu SSL (ablation âm). Qwen2-Audio 4-bit chạy được T4 |
+| _exp21_ | **MEAN-POOL CONCAT THÔ 3 encoder** (WavLM+audeering+Qwen2-Audio, 6147-D) (NỘP 18/6, **SẬP**) | EMOS 0.4959 · CAT 0.2332 · VAL/ARO/DOM **= 0** | 💀 **SẬP/overfit** (val nội bộ ẢO 0.82): LLM 4096-D outlier nối thô → trunk chết. **Bài học: thêm LLM phải chuẩn hoá + giảm chiều** (exp20 vá đúng) |
 
 ---
 
@@ -56,6 +61,7 @@
 | exp12 | ablation khởi tạo WavLM (scratch / base / sailer) | 8/6 | chưa chạy đủ 3 mode (trả lời mentor) |
 | exp14 | Mamba head cộng vào fusion exp07 (WavLM frame đóng băng) | 8/6 | chỉ có .py, chưa convert .ipynb |
 | **exp16** | **Audio-LLM-as-Judge** (API Gemini/GPT-4o-audio chấm 6 cột) — novelty cho paper, KHÔNG GPU | 8/6 | code xong (.py+.ipynb), cache+resume; chưa chạy (cần API key) |
+| **exp19** | **FINE-TUNE WavLM top-6 (LIVE) + CROSS-ATTENTION + audeering cache + ranking loss** — lấp ô "ft+xattn" | 17/6 | code xong (.py+.ipynb, py_compile OK, fix GradScaler flush); lưu CẢ backbone; ⚠️ cảnh giác overfit (vết exp11); chưa chạy |
 
 ---
 
