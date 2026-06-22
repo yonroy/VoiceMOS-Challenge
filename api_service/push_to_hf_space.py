@@ -5,7 +5,7 @@ Push thư mục api_service/ lên Hugging Face Space (SDK = Docker).
 Cách dùng (PowerShell):
     $env:HF_TOKEN = "hf_xxx"          # token WRITE (Settings → Access Tokens)
     python push_to_hf_space.py        # tạo Space mặc định + upload
-    python push_to_hf_space.py --repo tranminhtoan140601/voicemos2026-api --private
+    python push_to_hf_space.py --repo yonroy/voicemos2026-api --private
 
 Yêu cầu: pip install huggingface_hub
 Lưu ý: KHÔNG hardcode token vào file. Nếu HF repo checkpoint Track 2 để PRIVATE,
@@ -30,7 +30,7 @@ IGNORE = [
 
 def main():
     ap = argparse.ArgumentParser(description="Deploy VoiceMOS 3-track API lên HF Space (Docker).")
-    ap.add_argument("--repo", default="tranminhtoan140601/voicemos2026-api",
+    ap.add_argument("--repo", default="yonroy/voicemos2026-api",
                     help="Space repo id dạng <user>/<space-name>")
     ap.add_argument("--token", default=os.environ.get("HF_TOKEN"),
                     help="HF token WRITE (mặc định lấy từ env HF_TOKEN)")

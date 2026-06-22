@@ -190,7 +190,7 @@
 - [x] **Redesign Apple-clean** (CSS nhúng: nền trắng, font SF, bảng hairline, bullet accent, blockquote thẻ; title+divider lead)
 - [x] **Render HTML** `slide/voicemos2026_slides.html` (marp-cli `--html --no-stdin`)
 - [x] ⭐ **Xây API service 3 track** (`api_service/`): FastAPI REST + Docker, lazy-load, Track 2 thêm QMOS → đủ 6 cột
-- [x] **PUSH + BUILD + RUNNING** trên HF Space `tranminhtoan140601/voicemos2026-api` (free CPU); verified `/health`,`/docs`; predict thật OK
+- [x] **PUSH + BUILD + RUNNING** trên HF Space `yonroy/voicemos2026-api` (free CPU); verified `/health`,`/docs`; predict thật OK
 - [x] **Đính chính:** URGENT-MOS chạy được trên HF free CPU (cả 3 track) — bác bỏ lo ngại "Track 1 quá nặng"
 - [x] `score_100audio.py` — batch chấm emotion 100 file qua API → CSV (resume, zero-dep)
 
@@ -215,7 +215,7 @@
 
 ## 🆕 VIỆC MENTOR GIAO (9/6/2026)
 - [x] 🎉 **Làm slide present cho cả 3 track (XONG 10/6, Phiên 18)** → `docs/21_slides_3_tracks.md` (Marp, tiếng Việt, ~21 slide, mạch như bài báo rút gọn) + 3 hình kiến trúc SVG inline (overview / fusion / fine-tune). _(còn: bật enableHtml → export PDF/PPTX gửi mentor)_
-- [x] 🎉 **Đẩy TẤT CẢ lên Hugging Face (XONG 9/6, acc `tranminhtoan140601`):** 3 repo — checkpoint `voicemos2026-track2-emotion` (3 file .pt) · UI Space `voicemos2026-demo` (RUNNING) · code `voicemos2026-code` (55 file). Tất cả CC BY-NC-SA 4.0, không kèm data thô. File chuẩn bị ở `huggingface/` (PUSH_GUIDE.md).
+- [x] 🎉 **Đẩy TẤT CẢ lên Hugging Face (XONG 9/6, acc `yonroy`):** 3 repo — checkpoint `voicemos2026-track2-emotion` (3 file .pt) · UI Space `voicemos2026-demo` (RUNNING) · code `voicemos2026-code` (55 file). Tất cả CC BY-NC-SA 4.0, không kèm data thô. File chuẩn bị ở `huggingface/` (PUSH_GUIDE.md).
 - [x] **Tạo demo Gradio gộp 3 track** `kaggle_baseline/demo_all_tracks_gradio` + **`demo_run_from_hf`** (kéo UI từ HF chạy Kaggle GPU) — 3 tab lazy-load, Track 2 dùng exp08 (chỉ cảm xúc, KHÔNG QMOS)
 - [x] **Nâng UI Space** clean light + Plotly (gauge/radar/bar + badge màu); fix gradio 4→6 → Space **RUNNING**
 - [ ] 🔒 **REVOKE token HF** đã lộ trong chat 9/6 → tạo token mới nếu cần

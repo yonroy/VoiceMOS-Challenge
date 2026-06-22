@@ -25,13 +25,13 @@ Mỗi track **lazy-load** (nạp model ở request đầu tiên) → Space khở
 ## Model dùng
 - **Track 1:** URGENT-MOS (`urgent-challenge/urgent-mos-f1c1m5dcorpus`) — tự clone repo + tải checkpoint.
 - **Track 2:** QMOS ← UTMOS (SpeechMOS) · EMOS/CAT/VAD ← **exp08** (WavLM fine-tune + audeering),
-  checkpoint kéo từ HF repo `tranminhtoan140601/voicemos2026-track2-emotion/ft_emotion_full_20epoch.pt`.
+  checkpoint kéo từ HF repo `yonroy/voicemos2026-track2-emotion/ft_emotion_full_20epoch.pt`.
 - **Track 3:** ECAPA-TDNN fine-tuned (clone `vmc2026-baselines`, dùng checkpoint kèm repo).
 
 ## Biến môi trường (tùy chọn)
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
-| `T2_HF_REPO` | `tranminhtoan140601/voicemos2026-track2-emotion` | HF repo chứa checkpoint Track 2 |
+| `T2_HF_REPO` | `yonroy/voicemos2026-track2-emotion` | HF repo chứa checkpoint Track 2 |
 | `T2_HF_CKPT` | `ft_emotion_full_20epoch.pt` | tên file checkpoint exp08 |
 | `T1_CKPT` | `urgent-challenge/urgent-mos-f1c1m5dcorpus` | checkpoint URGENT-MOS |
 | `MODELS_DIR` | `/home/user/models` | nơi clone repo + cache |
@@ -83,7 +83,7 @@ Ví dụ response `/track2`:
 ```powershell
 pip install huggingface_hub
 $env:HF_TOKEN = "hf_xxx"                 # token WRITE; nhớ REVOKE token cũ đã lộ
-python push_to_hf_space.py               # tạo Space + upload (mặc định tranminhtoan140601/voicemos2026-api)
+python push_to_hf_space.py               # tạo Space + upload (mặc định yonroy/voicemos2026-api)
 # tùy chọn:
 python push_to_hf_space.py --private --hardware cpu-upgrade --set-token-secret
 ```

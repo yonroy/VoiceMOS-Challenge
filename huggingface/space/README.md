@@ -21,7 +21,7 @@ Một Space cho cả 3 track của VoiceMOS Challenge 2026:
 ## Cấu hình cần thiết
 
 - **Checkpoint Track 2** được tải tự động từ HF Models repo
-  [`tranminhtoan140601/voicemos2026-track2-emotion`](https://huggingface.co/tranminhtoan140601/voicemos2026-track2-emotion)
+  [`yonroy/voicemos2026-track2-emotion`](https://huggingface.co/yonroy/voicemos2026-track2-emotion)
   qua `hf_hub_download` (xem `app.py`).
 - Track 1 & Track 3 tự clone repo/model lúc chạy lần đầu.
 

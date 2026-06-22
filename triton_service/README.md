@@ -192,6 +192,6 @@ python triton_service/ui/app_ui.py    # http://localhost:7860
 
 ## Ghi chú
 
-- **Checkpoint Track 2** (`ft_emotion_full_20epoch.pt`): nằm trên HF repo `tranminhtoan140601/voicemos2026-track2-emotion`. Server tự tải khi `initialize()`. Repo private → đặt `HF_TOKEN`.
+- **Checkpoint Track 2** (`ft_emotion_full_20epoch.pt`): nằm trên HF repo `yonroy/voicemos2026-track2-emotion`. Server tự tải khi `initialize()`. Repo private → đặt `HF_TOKEN`.
 - **VRAM**: 3 model cùng lúc ~5–7GB (Track2 ~3GB + Track1 ~1–2GB + Track3 ~0.5GB) → vừa 12GB.
 - **Tăng instance**: nếu VRAM còn dư, tăng `count: 2` trong `config.pbtxt` của track muốn tăng throughput.

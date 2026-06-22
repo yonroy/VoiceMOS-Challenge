@@ -13,7 +13,7 @@ import os
 from huggingface_hub import HfApi, create_repo
 
 # ── SỬA Ở ĐÂY ────────────────────────────────────────────────────────────────
-HF_USER   = "tranminhtoan140601"                     # << username HF
+HF_USER   = "yonroy"                     # << username HF
 REPO_ID   = f"{HF_USER}/voicemos2026-track2-emotion"  # repo Models chứa checkpoint
 PRIVATE   = False                                     # True nếu muốn để riêng tư trước
 PROJECT   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # gốc dự án

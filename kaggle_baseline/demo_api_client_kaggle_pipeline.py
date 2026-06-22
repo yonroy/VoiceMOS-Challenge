@@ -3,7 +3,7 @@
 demo_api_client_kaggle — Client gọi API service 3 track (VoiceMOS 2026) trên Kaggle.
 
 Service đã deploy trên Hugging Face Space (FastAPI REST):
-    https://tranminhtoan140601-voicemos2026-api.hf.space   (Swagger: /docs)
+    https://yonroy-voicemos2026-api.hf.space   (Swagger: /docs)
 
 File này CHỈ là CLIENT (không nạp model, không cần GPU). Dùng trên KAGGLE với
 **Internet ON** (hoặc chạy local). Zero-dependency: chỉ thư viện chuẩn `urllib`.
@@ -37,7 +37,7 @@ import urllib.request
 import urllib.error
 import uuid
 
-DEFAULT_BASE = "https://tranminhtoan140601-voicemos2026-api.hf.space"
+DEFAULT_BASE = "https://yonroy-voicemos2026-api.hf.space"
 EMOTIONS5 = ["angry", "happy", "neutral", "sad", "surprised"]
 
 

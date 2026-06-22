@@ -12,7 +12,7 @@ import librosa
 import torch
 
 # ── Repo Models chứa checkpoint Track 2 (SỬA username cho khớp) ───────────────
-HF_MODEL_REPO = "tranminhtoan140601/voicemos2026-track2-emotion"
+HF_MODEL_REPO = "yonroy/voicemos2026-track2-emotion"
 T2_CKPT_FILE  = "ft_emotion_full_20epoch.pt"
 # ──────────────────────────────────────────────────────────────────────────────
 
@@ -430,8 +430,8 @@ with gr.Blocks(title="VMC2026 — Demo 3 Track", theme=THEME, css=CUSTOM_CSS) as
 
     gr.HTML(
         "<div id='foot'>VoiceMOS Challenge 2026 · CC BY-NC-SA 4.0 · "
-        "<a href='https://huggingface.co/tranminhtoan140601/voicemos2026-track2-emotion'>checkpoint</a> · "
-        "<a href='https://huggingface.co/tranminhtoan140601/voicemos2026-code'>code</a></div>"
+        "<a href='https://huggingface.co/yonroy/voicemos2026-track2-emotion'>checkpoint</a> · "
+        "<a href='https://huggingface.co/yonroy/voicemos2026-code'>code</a></div>"
     )
 
 if __name__ == "__main__":

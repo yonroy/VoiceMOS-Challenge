@@ -92,18 +92,18 @@ VoiceMOS Challenge 2026/
 ## 🌐 Demo & API trên Hugging Face (đã deploy)
 
 **🎛️ Demo UI (Gradio, 3 tab)** — giao diện kéo-thả audio chấm cả 3 track:
-- Space: https://huggingface.co/spaces/tranminhtoan140601/voicemos2026-demo
-- App trực tiếp: https://tranminhtoan140601-voicemos2026-demo.hf.space
+- Space: https://huggingface.co/spaces/yonroy/voicemos2026-demo
+- App trực tiếp: https://yonroy-voicemos2026-demo.hf.space
 - ⚡ HF Space free chỉ có CPU (chậm) → chạy nhanh trên **Kaggle T4** qua [kaggle_baseline/demo_run_from_hf.ipynb](kaggle_baseline/demo_run_from_hf.ipynb) (kéo `app.py` từ Space → chạy GPU → link `gradio.live`).
 
 **🔌 API service (FastAPI REST, đóng Docker)** — chấm MOS tự động qua HTTP, đang **RUNNING** (free CPU). Code: [api_service/](api_service/).
-- Space: https://tranminhtoan140601-voicemos2026-api.hf.space · Swagger: `/docs`
+- Space: https://yonroy-voicemos2026-api.hf.space · Swagger: `/docs`
 - Endpoint: `POST /track1` (ACR+CCR) · `POST /track2` (QMOS+EMOS+CAT+VAD) · `POST /track3` (spk+acc) · `GET /health`
 - Gọi hàng loạt từ Kaggle: [kaggle_baseline/demo_api_client_kaggle.ipynb](kaggle_baseline/demo_api_client_kaggle.ipynb)
 
 **📦 Checkpoint & code (HF Models):**
-- Checkpoint Track 2 (cảm xúc): https://huggingface.co/tranminhtoan140601/voicemos2026-track2-emotion
-- Code/pipeline: https://huggingface.co/tranminhtoan140601/voicemos2026-code
+- Checkpoint Track 2 (cảm xúc): https://huggingface.co/yonroy/voicemos2026-track2-emotion
+- Code/pipeline: https://huggingface.co/yonroy/voicemos2026-code
 
 **🎞️ Slide thuyết trình 3 track (mentor giao):**
 - **🟢 Deck ĐANG DÙNG — Swiss Modern (21 slide):** [slide/voicemos2026_swiss.html](slide/voicemos2026_swiss.html) · script nói [slide/voicemos2026_swiss_script.md](slide/voicemos2026_swiss_script.md) — thứ tự Track 1 → Track 3 → Track 2, có MOS & SRCC, leaderboard, deploy Triton, demo video.

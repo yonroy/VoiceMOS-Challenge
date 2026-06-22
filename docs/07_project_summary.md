@@ -128,8 +128,8 @@ d:\VFS\VoiceMOS Challenge 2026\
 ---
 
 ## Liên kết quan trọng
-- **Demo UI (Gradio 3 tab, HF Space):** https://huggingface.co/spaces/tranminhtoan140601/voicemos2026-demo (chạy nhanh trên Kaggle T4 qua `kaggle_baseline/demo_run_from_hf.ipynb`)
-- **API service 3 track (HF Space, Phiên 19):** https://tranminhtoan140601-voicemos2026-api.hf.space (Swagger `/docs`) — FastAPI REST, code ở `api_service/`
+- **Demo UI (Gradio 3 tab, HF Space):** https://huggingface.co/spaces/yonroy/voicemos2026-demo (chạy nhanh trên Kaggle T4 qua `kaggle_baseline/demo_run_from_hf.ipynb`)
+- **API service 3 track (HF Space, Phiên 19):** https://yonroy-voicemos2026-api.hf.space (Swagger `/docs`) — FastAPI REST, code ở `api_service/`
 - Website challenge: https://sites.google.com/view/voicemos-challenge/voicemos-challenge-2026
 - Baseline chính thức: https://github.com/voicemos-challenge/vmc2026-baselines
 - Nền tảng thi: https://www.codabench.org/

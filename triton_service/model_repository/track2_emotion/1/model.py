@@ -31,7 +31,7 @@ _EMO_ALIAS = {
 }
 
 # Có thể đổi qua biến môi trường khi `docker run -e ...`
-T2_HF_REPO = os.environ.get("T2_HF_REPO", "tranminhtoan140601/voicemos2026-track2-emotion")
+T2_HF_REPO = os.environ.get("T2_HF_REPO", "yonroy/voicemos2026-track2-emotion")
 T2_HF_CKPT = os.environ.get("T2_HF_CKPT", "ft_emotion_full_20epoch.pt")
 MODELS_DIR = os.environ.get("MODELS_DIR", "/tmp/models")
 

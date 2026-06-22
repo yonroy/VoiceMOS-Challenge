@@ -17,7 +17,7 @@ pipeline_tag: audio-classification
 
 Bộ checkpoint cho **VoiceMOS Challenge 2026 Track 2** — dự đoán điểm MOS cho giọng nói cảm xúc
 (EMOS / EmoCat / VAD) và chất lượng (QMOS). Đây là các model train trong dự án; dùng kèm code ở
-[demo Space](https://huggingface.co/spaces/tranminhtoan140601/voicemos2026-demo).
+[demo Space](https://huggingface.co/spaces/yonroy/voicemos2026-demo).
 
 ## 📊 KẾT QUẢ — checkpoint `ft_emotion_full_20epoch.pt` (exp08, DEV, UTT-SRCC)
 

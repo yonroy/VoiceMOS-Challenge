@@ -333,7 +333,7 @@ Triton metrics :8002 · docker-compose · mạng nội bộ
 
 ### 1. ⭐ Chấm lại 100 audio với `target_emotion=happy` → EMOS thật
 - Phát hiện `100audio_emotion_scores.csv` (Phiên 20–21) **không có cột `emos`** — head EMOS cần one-hot target mà lần chấm trước không truyền. Dùng lại `score_100audio.py --target happy --out 100audio_emotion_scores_happy.csv` (file MỚI — nếu ghi vào file cũ, resume sẽ bỏ qua cả 100 file đã chấm).
-- Chạy 100/100 OK qua `https://tranminhtoan140601-voicemos2026-api.hf.space` (~8–10s/file, nhanh hơn dự kiến vì Space đã nạp model). Gotcha Windows: `UnicodeEncodeError` cp1252 khi print tiếng Việt → fix `PYTHONIOENCODING=utf-8`.
+- Chạy 100/100 OK qua `https://yonroy-voicemos2026-api.hf.space` (~8–10s/file, nhanh hơn dự kiến vì Space đã nạp model). Gotcha Windows: `UnicodeEncodeError` cp1252 khi print tiếng Việt → fix `PYTHONIOENCODING=utf-8`.
 
 ### 2. 🔬 Kết quả EMOS (target happy, thang 1–5)
 - **Dải 1.872 → 3.364, mean 2.745** — value lệch xuống do domain tiếng Việt (DEV tiếng Anh thường 4+), đúng pattern "chỉ tin thứ hạng".
@@ -439,7 +439,7 @@ Triton metrics :8002 · docker-compose · mạng nội bộ
 - **FastAPI REST (JSON)** đóng **Docker** → Hugging Face Space. Tái dùng nguyên code inference của `demo_all_tracks_gradio_pipeline.py`, **lazy-load** mỗi track. Track 2 **thêm cột QMOS** (UTMOS/SpeechMOS) → đủ 6 cột.
 - Endpoint: `/track1` (ACR+CCR) · `/track2` (QMOS+EMOS+CAT+VAD) · `/track3` (spk+acc) · `/health` · `/docs`.
 - File: `app/main.py`, `app/tracks/track{1,2,3}.py`, `Dockerfile`, `requirements.txt`, `README.md`, `push_to_hf_space.py`, `tests/smoke_test.py`.
-- **ĐÃ PUSH + BUILD + RUNNING** trên **HF free CPU**: Space `tranminhtoan140601/voicemos2026-api`. Verified `/health` → `{"status":"ok"}`, `/docs` HTTP 200, `/openapi.json` đủ 3 route. **Predict thật OK** (sample_001 ~54s gồm tải model: happy, VAD 3.49/3.60/2.89, QMOS 1.63).
+- **ĐÃ PUSH + BUILD + RUNNING** trên **HF free CPU**: Space `yonroy/voicemos2026-api`. Verified `/health` → `{"status":"ok"}`, `/docs` HTTP 200, `/openapi.json` đủ 3 route. **Predict thật OK** (sample_001 ~54s gồm tải model: happy, VAD 3.49/3.60/2.89, QMOS 1.63).
 - Gotcha: marp/push in `→` lỗi cp1252 Windows → cần `PYTHONUTF8=1`; `python` trên máy lúc venv lúc global Python312.
 
 ### 4. Đính chính quan trọng (trung thực)
@@ -507,7 +507,7 @@ Triton metrics :8002 · docker-compose · mạng nội bộ
 
 **Người thực hiện:** Tran Minh Toan · **Nội dung:** thực hiện 2 yêu cầu mentor (slide 3 track + đẩy hết lên HF); xây demo Gradio gộp 3 track + nâng UI ấn tượng.
 
-### 1. Đẩy toàn bộ lên Hugging Face (tài khoản `tranminhtoan140601`) — XONG
+### 1. Đẩy toàn bộ lên Hugging Face (tài khoản `yonroy`) — XONG
 3 repo (đều CC BY-NC-SA 4.0, KHÔNG kèm data thô):
 - **Checkpoint** (Models) `voicemos2026-track2-emotion`: `ft_emotion_full_20epoch.pt` (1.27GB, exp08 cảm xúc), `ft_qmos_utmos.pt` (411MB, exp13 QMOS), `ft_joint_full.pt` (1.9GB, exp11) + model card.
 - **UI demo** (Space Gradio) `voicemos2026-demo`: app 3 tab, tải ckpt từ Models repo.

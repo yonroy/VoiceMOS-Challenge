@@ -15,7 +15,7 @@
 # Ví dụ:
 #   python benchmark_vs_fastapi.py --dir ./wavs --emotion happy \
 #       --triton-url localhost:8000 \
-#       --fastapi-base https://tranminhtoan140601-voicemos2026-api.hf.space \
+#       --fastapi-base https://yonroy-voicemos2026-api.hf.space \
 #       --concurrency 1,4,8,16 --out bench.csv --plot bench.png
 #
 # Bỏ qua 1 bên bằng cách KHÔNG truyền --triton-url hoặc --fastapi-base.

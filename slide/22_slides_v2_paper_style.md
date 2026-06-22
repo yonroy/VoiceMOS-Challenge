@@ -106,7 +106,7 @@ section.lead p { color: var(--soft); font-size: 21px; line-height: 1.6; margin: 
 
 **Tham gia cả 3 track** — trọng tâm **Track 2 (Emotional TTS)**
 
-Tran Minh Toan · tranminhtoan140601@gmail.com
+Tran Minh Toan · yonroy@gmail.com
 Slide v2 (theo mạch paper) · Hướng tới ICASSP 2027
 
 ---
@@ -940,7 +940,7 @@ client --(POST .wav)--> FastAPI gateway :18080 --(tritonclient)--> Triton :8000
 ## Demo & thử trực tiếp
 
 - **UI demo (Gradio, 3 tab — kéo-thả audio → xem điểm 6 cột):**
-  **huggingface.co/spaces/tranminhtoan140601/voicemos2026-demo**
+  **huggingface.co/spaces/yonroy/voicemos2026-demo**
 - **API service REST 3 track** (HF Space, free CPU): `voicemos2026-api` (Swagger `/docs`)
 - **UI Triton 4 tab** (Track 1/2/3 + chấm hàng loạt) — gọi gateway nội bộ `:18080`
 
@@ -955,8 +955,8 @@ client --(POST .wav)--> FastAPI gateway :18080 --(tritonclient)--> Triton :8000
 
 - **CodaBench (competition):** codabench.org/competitions/16419
 - **Baseline chính thức:** github.com/voicemos-challenge/vmc2026-baselines
-- **Demo UI (thử trực tiếp):** huggingface.co/spaces/tranminhtoan140601/voicemos2026-demo
-- **Hugging Face (`tranminhtoan140601`):** checkpoint · demo Space `voicemos2026-demo` · API `voicemos2026-api`
+- **Demo UI (thử trực tiếp):** huggingface.co/spaces/yonroy/voicemos2026-demo
+- **Hugging Face (`yonroy`):** checkpoint · demo Space `voicemos2026-demo` · API `voicemos2026-api`
 - Website: sites.google.com/view/voicemos-challenge
 
 # Cảm ơn — Q&A 🎤

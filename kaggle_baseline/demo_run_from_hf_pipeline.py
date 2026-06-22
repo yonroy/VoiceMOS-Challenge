@@ -1,12 +1,12 @@
 # %% [markdown]
 # # VMC2026 — Chạy demo Gradio trên KAGGLE bằng cách KÉO code UI từ Hugging Face
 #
-# Chiến lược: **HF = nơi chứa code UI** (Space `tranminhtoan140601/voicemos2026-demo`),
+# Chiến lược: **HF = nơi chứa code UI** (Space `yonroy/voicemos2026-demo`),
 # **Kaggle = nơi chạy** (GPU T4 free). Notebook này tải `app.py` từ Space về rồi chạy →
 # ra link `*.gradio.live` (sống ~72h) để gửi mentor. KHÔNG tốn GPU trả phí của HF.
 #
 # `app.py` tự nhận môi trường: trên Kaggle → `share=True` (link công khai); checkpoint Track 2
-# tự tải từ HF Models repo `tranminhtoan140601/voicemos2026-track2-emotion`.
+# tự tải từ HF Models repo `yonroy/voicemos2026-track2-emotion`.
 #
 # ### Cách chạy
 # 1. Settings → **GPU T4 + Internet On**.
@@ -33,7 +33,7 @@ pip_install("gradio==6.17.3", "huggingface_hub", "librosa", "soundfile",
 import os
 from huggingface_hub import snapshot_download
 
-SPACE_REPO = "tranminhtoan140601/voicemos2026-demo"
+SPACE_REPO = "yonroy/voicemos2026-demo"
 LOCAL_DIR = "/kaggle/working/vmc_demo"
 
 # Tải toàn bộ repo Space (app.py + requirements + README) về local

@@ -718,7 +718,7 @@ So sánh từng model cảm xúc trên DEV:
 
 - **CodaBench (competition):** codabench.org/competitions/16419
 - **Baseline chính thức:** github.com/voicemos-challenge/vmc2026-baselines
-- **Hugging Face (`tranminhtoan140601`):** checkpoint · demo Space · code
+- **Hugging Face (`yonroy`):** checkpoint · demo Space · code
 - Website: sites.google.com/view/voicemos-challenge
 
 # Cảm ơn — Q&A 🎤
